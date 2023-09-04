@@ -23,9 +23,6 @@ var errCacheNotFound error = errors.New("cache not found")
 // errNoCache is returned if not caching
 var errNoCache error = errors.New("no cache")
 
-// errCacheExpired is returned if the cache is expired
-var errCacheExpired error = errors.New("cache expired")
-
 type Cacher interface {
 	Name() string
 	Load(req *http.Request) (res *http.Response, err error)
