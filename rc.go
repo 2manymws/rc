@@ -103,7 +103,7 @@ func (rc *cacheMw) Handler(next http.Handler) http.Handler {
 	})
 }
 
-// New returns a new rate cacher middleware.
+// New returns a new response cache middleware.
 // The order of the cachers is arranged in order of high-speed cache, such as CPU L1 cache and L2 cache.
 func New(cachers ...Cacher) func(next http.Handler) http.Handler {
 	rl := newCacheMw(cachers)
