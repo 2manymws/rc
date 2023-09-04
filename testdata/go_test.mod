@@ -5,7 +5,7 @@ go 1.21.0
 require (
 	github.com/google/go-cmp v0.5.9
 	github.com/k1LoW/httpstub v0.11.0
-	github.com/k1LoW/rp v0.4.2
+	github.com/k1LoW/rp v0.4.3
 )
 
 require (
