@@ -42,3 +42,11 @@ func MustParseURL(urlstr string) *url.URL {
 func NewBody(s string) io.ReadCloser {
 	return io.NopCloser(strings.NewReader(s))
 }
+
+func ReadBody(r io.ReadCloser) string {
+	b, err := io.ReadAll(r)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
+}
