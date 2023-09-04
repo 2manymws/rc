@@ -20,7 +20,7 @@ func TestRC(t *testing.T) {
 		wantResponses []*http.Response
 		wantHits      []int
 	}{
-		{"all cache", []rc.Cacher{testutil.NewAllCache()}, []*http.Request{
+		{"all cache", []rc.Cacher{testutil.NewAllCache(t)}, []*http.Request{
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodDelete, URL: testutil.MustParseURL("http://example.com/1")},
@@ -29,7 +29,7 @@ func TestRC(t *testing.T) {
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
 		}, []int{2}},
-		{"all cache 2", []rc.Cacher{testutil.NewAllCache()}, []*http.Request{
+		{"all cache 2", []rc.Cacher{testutil.NewAllCache(t)}, []*http.Request{
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/2")},
 			{Method: http.MethodDelete, URL: testutil.MustParseURL("http://example.com/1")},
@@ -38,7 +38,7 @@ func TestRC(t *testing.T) {
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
 		}, []int{1}},
-		{"get only", []rc.Cacher{testutil.NewGetOnlyCache()}, []*http.Request{
+		{"get only", []rc.Cacher{testutil.NewGetOnlyCache(t)}, []*http.Request{
 			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodDelete, URL: testutil.MustParseURL("http://example.com/1")},
@@ -49,7 +49,7 @@ func TestRC(t *testing.T) {
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":3}`)},
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
 		}, []int{1}},
-		{"multi cache", []rc.Cacher{testutil.NewGetOnlyCache(), testutil.NewAllCache()}, []*http.Request{
+		{"multi cache", []rc.Cacher{testutil.NewGetOnlyCache(t), testutil.NewAllCache(t)}, []*http.Request{
 			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodDelete, URL: testutil.MustParseURL("http://example.com/1")},
