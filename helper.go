@@ -7,14 +7,15 @@ import (
 	"net/http"
 )
 
-type CacheResponse struct {
+type cacheResponse struct {
 	StatusCode int
 	Header     http.Header
 	Body       []byte
 }
 
+// ResponseToBytes converts http.Response to []byte.
 func ResponseToBytes(res *http.Response) ([]byte, error) {
-	c := &CacheResponse{
+	c := &cacheResponse{
 		StatusCode: res.StatusCode,
 		Header:     res.Header,
 	}
@@ -31,8 +32,9 @@ func ResponseToBytes(res *http.Response) ([]byte, error) {
 	return cb, nil
 }
 
+// BytesToResponse converts []byte to http.Response.
 func BytesToResponse(b []byte) (*http.Response, error) {
-	c := &CacheResponse{}
+	c := &cacheResponse{}
 	if err := json.Unmarshal(b, c); err != nil {
 		return nil, err
 	}
