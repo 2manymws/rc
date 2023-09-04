@@ -1,4 +1,4 @@
-package rc
+package rc_test
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/k1LoW/rc"
 	testuc "github.com/k1LoW/rc/testutil"
+	"github.com/k1LoW/rp"
 	"github.com/k1LoW/rp/testutil"
 )
 
@@ -49,7 +50,8 @@ func BenchmarkRC(b *testing.B) {
 	}
 	c := testuc.NewAllCache(b)
 	m := rc.New(c)
-	r := testutil.NewRelayer(upstreams)
+	rl := testutil.NewRelayer(upstreams)
+	r := rp.NewRouter(rl)
 	proxy := httptest.NewServer(m(r))
 	b.Cleanup(func() {
 		proxy.Close()
