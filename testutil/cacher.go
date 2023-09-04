@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 )
 
@@ -35,6 +36,7 @@ type AllCache struct {
 	m   map[string]string
 	dir string
 	hit int
+	mu  sync.Mutex
 }
 
 type GetOnlyCache struct {
@@ -42,6 +44,7 @@ type GetOnlyCache struct {
 	m   map[string]string
 	dir string
 	hit int
+	mu  sync.Mutex
 }
 
 func NewAllCache(t testing.TB) *AllCache {
@@ -60,7 +63,9 @@ func (c *AllCache) Name() string {
 
 func (c *AllCache) Load(req *http.Request) (res *http.Response, err error) {
 	c.t.Helper()
+	c.mu.Lock()
 	p, ok := c.m[req.URL.String()]
+	c.mu.Unlock()
 	if !ok {
 		return nil, errCacheNotFound
 	}
@@ -86,7 +91,9 @@ func (c *AllCache) Store(req *http.Request, res *http.Response) error {
 	if err := os.WriteFile(p, b, os.ModePerm); err != nil {
 		return err
 	}
+	c.mu.Lock()
 	c.m[req.URL.String()] = p
+	c.mu.Unlock()
 	return nil
 }
 
@@ -113,7 +120,9 @@ func (c *GetOnlyCache) Load(req *http.Request) (res *http.Response, err error) {
 	if req.Method != http.MethodGet {
 		return nil, errNoCache
 	}
+	c.mu.Lock()
 	p, ok := c.m[req.URL.String()]
+	c.mu.Unlock()
 	if !ok {
 		return nil, errCacheNotFound
 	}
@@ -142,7 +151,9 @@ func (c *GetOnlyCache) Store(req *http.Request, res *http.Response) error {
 	if err := os.WriteFile(p, b, os.ModePerm); err != nil {
 		return err
 	}
+	c.mu.Lock()
 	c.m[req.URL.String()] = p
+	c.mu.Unlock()
 	return nil
 }
 
