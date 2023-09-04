@@ -64,7 +64,7 @@ func (c *AllCache) Name() string {
 func (c *AllCache) Load(req *http.Request) (res *http.Response, err error) {
 	c.t.Helper()
 	c.mu.Lock()
-	p, ok := c.m[req.URL.String()]
+	p, ok := c.m[req.URL.Path]
 	c.mu.Unlock()
 	if !ok {
 		return nil, errCacheNotFound
@@ -77,6 +77,7 @@ func (c *AllCache) Load(req *http.Request) (res *http.Response, err error) {
 	if err != nil {
 		return nil, err
 	}
+	res.Header.Set("X-Cache", "HIT")
 	c.hit++
 	return res, nil
 }
@@ -87,12 +88,12 @@ func (c *AllCache) Store(req *http.Request, res *http.Response) error {
 	if err != nil {
 		return err
 	}
-	p := filepath.Join(c.dir, base64.URLEncoding.EncodeToString([]byte(req.URL.String())))
+	p := filepath.Join(c.dir, base64.URLEncoding.EncodeToString([]byte(req.URL.Path)))
 	if err := os.WriteFile(p, b, os.ModePerm); err != nil {
 		return err
 	}
 	c.mu.Lock()
-	c.m[req.URL.String()] = p
+	c.m[req.URL.Path] = p
 	c.mu.Unlock()
 	return nil
 }
@@ -121,7 +122,7 @@ func (c *GetOnlyCache) Load(req *http.Request) (res *http.Response, err error) {
 		return nil, errNoCache
 	}
 	c.mu.Lock()
-	p, ok := c.m[req.URL.String()]
+	p, ok := c.m[req.URL.Path]
 	c.mu.Unlock()
 	if !ok {
 		return nil, errCacheNotFound
@@ -134,6 +135,7 @@ func (c *GetOnlyCache) Load(req *http.Request) (res *http.Response, err error) {
 	if err != nil {
 		return nil, err
 	}
+	res.Header.Set("X-Cache", "HIT")
 	c.hit++
 	return res, nil
 }
@@ -147,12 +149,12 @@ func (c *GetOnlyCache) Store(req *http.Request, res *http.Response) error {
 	if err != nil {
 		return err
 	}
-	p := filepath.Join(c.dir, base64.URLEncoding.EncodeToString([]byte(req.URL.String())))
+	p := filepath.Join(c.dir, base64.URLEncoding.EncodeToString([]byte(req.URL.Path)))
 	if err := os.WriteFile(p, b, os.ModePerm); err != nil {
 		return err
 	}
 	c.mu.Lock()
-	c.m[req.URL.String()] = p
+	c.m[req.URL.Path] = p
 	c.mu.Unlock()
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/k1LoW/rc"
 	testuc "github.com/k1LoW/rc/testutil"
@@ -78,4 +79,57 @@ func BenchmarkRC(b *testing.B) {
 			}
 		}
 	})
+}
+
+func TestContainer(t *testing.T) {
+	hostname := "a.example.com"
+	urlstr := testutil.NewUpstreamEchoNGINXServer(t, hostname)
+	var upstreams = map[string]string{
+		hostname: urlstr,
+	}
+	c := testuc.NewAllCache(t)
+	m := rc.New(c)
+	rl := testutil.NewRelayer(upstreams)
+	r := rp.NewRouter(rl)
+	proxy := httptest.NewServer(m(r))
+	t.Cleanup(func() {
+		proxy.Close()
+	})
+
+	{
+		now := time.Now()
+		req, err := http.NewRequest("GET", proxy.URL+"/sleep", nil)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		req.Host = hostname
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		defer res.Body.Close()
+		after := time.Now()
+		if after.Sub(now) < 1*time.Second {
+			t.Fatal("sleep.js is not working")
+		}
+	}
+	{
+		req, err := http.NewRequest("GET", proxy.URL+"/sleep", nil)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		req.Host = hostname
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		defer res.Body.Close()
+		if res.Header.Get("X-Cache") != "HIT" {
+			t.Fatal("rp cache is not working")
+		}
+	}
 }
