@@ -27,5 +27,10 @@ jobs:
       - name: Run tests
         run: make ci
 
+      - name: Run benchmark
+        run: make benchmark
+
       - name: Run octocov
         uses: k1LoW/octocov-action@v0
+        env:
+          OCTOCOV_CUSTOM_METRICS_BENCHMARK: custom_metrics_bencmark.json

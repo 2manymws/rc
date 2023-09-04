@@ -1,2 +1,4 @@
+.envrc
+.tmp/
 coverage.out
 custom_metrics_bencmark.json
