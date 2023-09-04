@@ -35,7 +35,7 @@ func (rc *cacheMw) Handler(next http.Handler) http.Handler {
 			body []byte
 			err  error
 		)
-		// Use (Load) cache
+		// Use cache
 		hit := ""
 		for _, c := range rc.cachers {
 			res, err = c.Load(r)
