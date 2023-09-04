@@ -8,13 +8,14 @@ import (
 )
 
 type Cacher interface {
-	// Name returns the name of the cacher
+	// Name returns the name of the cacher.
 	Name() string
-	// Load loads the response cache
-	// If the cache is not found, it returns ErrCacheNotFound
-	// If not caching, it returns ErrNoCache
+	// Load loads the response cache.
+	// If the cache is not found, it returns ErrCacheNotFound.
+	// If not caching, it returns ErrNoCache.
+	// If the cache is expired, it returns ErrCacheExpired.
 	Load(req *http.Request) (res *http.Response, err error)
-	// Store stores the response cache
+	// Store stores the response cache.
 	Store(req *http.Request, res *http.Response) error
 }
 
@@ -103,7 +104,7 @@ func (rc *cacheMw) Handler(next http.Handler) http.Handler {
 }
 
 // New returns a new rate cacher middleware.
-// The order of the cachers is arranged in order of high-speed cache, such as CPU L1 cache and L2 cache
+// The order of the cachers is arranged in order of high-speed cache, such as CPU L1 cache and L2 cache.
 func New(cachers ...Cacher) func(next http.Handler) http.Handler {
 	rl := newCacheMw(cachers)
 	return rl.Handler
