@@ -1,6 +1,6 @@
 # rc [![Go Reference](https://pkg.go.dev/badge/github.com/k1LoW/rc.svg)](https://pkg.go.dev/github.com/k1LoW/rc) [![build](https://github.com/k1LoW/rc/actions/workflows/ci.yml/badge.svg)](https://github.com/k1LoW/rc/actions/workflows/ci.yml) ![Coverage](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/rc/coverage.svg) ![Code to Test Ratio](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/rc/ratio.svg) ![Test Execution Time](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/rc/time.svg)
 
-`rc` is a **r**esponse **c**ache middleware and helper for multiple cache rules and multiple cache stores.
+`rc` is a **r**esponse **c**ache middleware for multiple cache rules and multiple cache stores.
 
 ## Usage
 
