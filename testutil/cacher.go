@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/k1LoW/rc/rcutil"
+	"github.com/k1LoW/rcutil"
 )
 
 var (

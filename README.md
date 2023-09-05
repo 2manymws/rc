@@ -30,3 +30,7 @@ func main() {
     log.Fatal(http.ListenAndServe(":8080", m(r)))
 }
 ```
+
+## Utility functions
+
+See https://github.com/k1LoW/rcutil
