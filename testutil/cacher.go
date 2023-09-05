@@ -1,16 +1,15 @@
 package testutil
 
 import (
-	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
 	"testing"
+
+	"github.com/k1LoW/rc/rcutil"
 )
 
 var (
@@ -73,7 +72,7 @@ func (c *AllCache) Load(req *http.Request) (res *http.Response, err error) {
 	if err != nil {
 		return nil, errCacheNotFound
 	}
-	res, err = bytesToResponse(b)
+	res, err = rcutil.BytesToResponse(b)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +83,7 @@ func (c *AllCache) Load(req *http.Request) (res *http.Response, err error) {
 
 func (c *AllCache) Store(req *http.Request, res *http.Response) error {
 	c.t.Helper()
-	b, err := responseToBytes(res)
+	b, err := rcutil.ResponseToBytes(res)
 	if err != nil {
 		return err
 	}
@@ -131,7 +130,7 @@ func (c *GetOnlyCache) Load(req *http.Request) (res *http.Response, err error) {
 	if err != nil {
 		return nil, errCacheNotFound
 	}
-	res, err = bytesToResponse(b)
+	res, err = rcutil.BytesToResponse(b)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +144,7 @@ func (c *GetOnlyCache) Store(req *http.Request, res *http.Response) error {
 	if req.Method != http.MethodGet {
 		return errNoCache
 	}
-	b, err := responseToBytes(res)
+	b, err := rcutil.ResponseToBytes(res)
 	if err != nil {
 		return err
 	}
@@ -162,41 +161,4 @@ func (c *GetOnlyCache) Store(req *http.Request, res *http.Response) error {
 func (c *GetOnlyCache) Hit() int {
 	c.t.Helper()
 	return c.hit
-}
-
-type cacheResponse struct {
-	StatusCode int
-	Header     http.Header
-	Body       []byte
-}
-
-func responseToBytes(res *http.Response) ([]byte, error) {
-	c := &cacheResponse{
-		StatusCode: res.StatusCode,
-		Header:     res.Header,
-	}
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	c.Body = b
-	cb, err := json.Marshal(c)
-	if err != nil {
-		return nil, err
-	}
-	return cb, nil
-}
-
-func bytesToResponse(b []byte) (*http.Response, error) {
-	c := &cacheResponse{}
-	if err := json.Unmarshal(b, c); err != nil {
-		return nil, err
-	}
-	res := &http.Response{
-		StatusCode: c.StatusCode,
-		Header:     c.Header,
-		Body:       io.NopCloser(bytes.NewReader(c.Body)),
-	}
-	return res, nil
 }

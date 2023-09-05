@@ -1,4 +1,4 @@
-package rc
+package rcutil
 
 import (
 	"bytes"
