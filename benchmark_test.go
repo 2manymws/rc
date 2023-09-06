@@ -2,6 +2,7 @@ package rc_test
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,10 +21,29 @@ func BenchmarkNGINXCache(b *testing.B) {
 		hostname: fmt.Sprintf("http://%s:80", hostname),
 	}
 	proxy := testutil.NewReverseProxyNGINXServer(b, "r.example.com", upstreams)
+
+	// Make cache
+	for i := 0; i < 10000; i++ {
+		i := i
+		go func() {
+			req, err := http.NewRequest("GET", fmt.Sprintf("%s/sleep/%d", proxy, i), nil)
+			if err != nil {
+				b.Error(err)
+				return
+			}
+			req.Host = hostname
+			if _, err := http.DefaultClient.Do(req); err != nil {
+				b.Error(err)
+			}
+		}()
+	}
+
+	rand.Seed(time.Now().UnixNano())
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			req, err := http.NewRequest("GET", proxy+"sleep", nil)
+			i := rand.Intn(10000)
+			req, err := http.NewRequest("GET", fmt.Sprintf("%s/sleep/%d", proxy, i), nil)
 			if err != nil {
 				b.Error(err)
 				return
@@ -58,10 +78,28 @@ func BenchmarkRC(b *testing.B) {
 		proxy.Close()
 	})
 
+	// Make cache
+	for i := 0; i < 10000; i++ {
+		i := i
+		go func() {
+			req, err := http.NewRequest("GET", fmt.Sprintf("%s/sleep/%d", proxy.URL, i), nil)
+			if err != nil {
+				b.Error(err)
+				return
+			}
+			req.Host = hostname
+			if _, err := http.DefaultClient.Do(req); err != nil {
+				b.Error(err)
+			}
+		}()
+	}
+
+	rand.Seed(time.Now().UnixNano())
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			req, err := http.NewRequest("GET", proxy.URL+"/sleep", nil)
+			i := rand.Intn(10000)
+			req, err := http.NewRequest("GET", fmt.Sprintf("%s/sleep/%d", proxy.URL, i), nil)
 			if err != nil {
 				b.Error(err)
 				return
@@ -98,7 +136,7 @@ func TestContainer(t *testing.T) {
 
 	{
 		now := time.Now()
-		req, err := http.NewRequest("GET", proxy.URL+"/sleep", nil)
+		req, err := http.NewRequest("GET", proxy.URL+"/sleep/hello", nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -116,7 +154,7 @@ func TestContainer(t *testing.T) {
 		}
 	}
 	{
-		req, err := http.NewRequest("GET", proxy.URL+"/sleep", nil)
+		req, err := http.NewRequest("GET", proxy.URL+"/sleep/hello", nil)
 		if err != nil {
 			t.Error(err)
 			return
