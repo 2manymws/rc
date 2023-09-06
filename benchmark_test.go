@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
@@ -23,9 +24,12 @@ func BenchmarkNGINXCache(b *testing.B) {
 	proxy := testutil.NewReverseProxyNGINXServer(b, "r.example.com", upstreams)
 
 	// Make cache
+	wg := &sync.WaitGroup{}
 	for i := 0; i < 10000; i++ {
 		i := i
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			req, err := http.NewRequest("GET", fmt.Sprintf("%s/sleep/%d", proxy, i), nil)
 			if err != nil {
 				b.Error(err)
@@ -35,6 +39,7 @@ func BenchmarkNGINXCache(b *testing.B) {
 			res, err := http.DefaultClient.Do(req)
 			if err != nil {
 				b.Error(err)
+				return
 			}
 			res.Body.Close()
 		}()
@@ -82,9 +87,12 @@ func BenchmarkRC(b *testing.B) {
 	})
 
 	// Make cache
+	wg := &sync.WaitGroup{}
 	for i := 0; i < 10000; i++ {
 		i := i
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			req, err := http.NewRequest("GET", fmt.Sprintf("%s/sleep/%d", proxy.URL, i), nil)
 			if err != nil {
 				b.Error(err)
