@@ -32,9 +32,11 @@ func BenchmarkNGINXCache(b *testing.B) {
 				return
 			}
 			req.Host = hostname
-			if _, err := http.DefaultClient.Do(req); err != nil {
+			res, err := http.DefaultClient.Do(req)
+			if err != nil {
 				b.Error(err)
 			}
+			res.Body.Close()
 		}()
 	}
 
@@ -54,6 +56,7 @@ func BenchmarkNGINXCache(b *testing.B) {
 				b.Error(err)
 				return
 			}
+			res.Body.Close()
 			got := res.StatusCode
 			want := http.StatusOK
 			if res.StatusCode != http.StatusOK {
@@ -88,9 +91,11 @@ func BenchmarkRC(b *testing.B) {
 				return
 			}
 			req.Host = hostname
-			if _, err := http.DefaultClient.Do(req); err != nil {
+			res, err := http.DefaultClient.Do(req)
+			if err != nil {
 				b.Error(err)
 			}
+			res.Body.Close()
 		}()
 	}
 
@@ -110,6 +115,7 @@ func BenchmarkRC(b *testing.B) {
 				b.Error(err)
 				return
 			}
+			res.Body.Close()
 			got := res.StatusCode
 			want := http.StatusOK
 			if res.StatusCode != http.StatusOK {
