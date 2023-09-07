@@ -10,6 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/k1LoW/rc"
 	"github.com/k1LoW/rc/testutil"
+	testuc "github.com/k1LoW/rcutil/testutil"
 )
 
 func TestRC(t *testing.T) {
@@ -20,7 +21,7 @@ func TestRC(t *testing.T) {
 		wantResponses []*http.Response
 		wantHits      []int
 	}{
-		{"all cache", []rc.Cacher{testutil.NewAllCache(t)}, []*http.Request{
+		{"all cache", []rc.Cacher{testuc.NewAllCache(t)}, []*http.Request{
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodDelete, URL: testutil.MustParseURL("http://example.com/1")},
@@ -29,7 +30,7 @@ func TestRC(t *testing.T) {
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
 		}, []int{2}},
-		{"all cache 2", []rc.Cacher{testutil.NewAllCache(t)}, []*http.Request{
+		{"all cache 2", []rc.Cacher{testuc.NewAllCache(t)}, []*http.Request{
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/2")},
 			{Method: http.MethodDelete, URL: testutil.MustParseURL("http://example.com/1")},
@@ -38,7 +39,7 @@ func TestRC(t *testing.T) {
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
 		}, []int{1}},
-		{"get only", []rc.Cacher{testutil.NewGetOnlyCache(t)}, []*http.Request{
+		{"get only", []rc.Cacher{testuc.NewGetOnlyCache(t)}, []*http.Request{
 			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodDelete, URL: testutil.MustParseURL("http://example.com/1")},
@@ -49,7 +50,7 @@ func TestRC(t *testing.T) {
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":3}`)},
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":2}`)},
 		}, []int{1}},
-		{"multi cache", []rc.Cacher{testutil.NewGetOnlyCache(t), testutil.NewAllCache(t)}, []*http.Request{
+		{"multi cache", []rc.Cacher{testuc.NewGetOnlyCache(t), testuc.NewAllCache(t)}, []*http.Request{
 			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodDelete, URL: testutil.MustParseURL("http://example.com/1")},
@@ -109,7 +110,7 @@ func TestRC(t *testing.T) {
 			}
 
 			for i, want := range tt.wantHits {
-				got := tt.cachers[i].(testutil.Cacher).Hit()
+				got := tt.cachers[i].(testuc.Cacher).Hit()
 				if got != want {
 					t.Errorf("got %v want %v", got, want)
 				}
