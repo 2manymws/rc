@@ -1,8 +1,10 @@
 package testutil
 
 import (
-	"encoding/base64"
+	"crypto/sha1"
+	"encoding/hex"
 	"errors"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -62,8 +64,13 @@ func (c *AllCache) Name() string {
 
 func (c *AllCache) Load(req *http.Request) (res *http.Response, err error) {
 	c.t.Helper()
+	seed, err := rcutil.Seed(req, []string{})
+	if err != nil {
+		return nil, err
+	}
+	key := seedToKey(seed)
 	c.mu.Lock()
-	p, ok := c.m[req.URL.Path]
+	p, ok := c.m[key]
 	c.mu.Unlock()
 	if !ok {
 		return nil, errCacheNotFound
@@ -87,12 +94,17 @@ func (c *AllCache) Store(req *http.Request, res *http.Response) error {
 	if err != nil {
 		return err
 	}
-	p := filepath.Join(c.dir, base64.URLEncoding.EncodeToString([]byte(req.URL.Path)))
+	seed, err := rcutil.Seed(req, []string{})
+	if err != nil {
+		return err
+	}
+	key := seedToKey(seed)
+	p := filepath.Join(c.dir, key)
 	if err := os.WriteFile(p, b, os.ModePerm); err != nil {
 		return err
 	}
 	c.mu.Lock()
-	c.m[req.URL.Path] = p
+	c.m[key] = p
 	c.mu.Unlock()
 	return nil
 }
@@ -120,8 +132,13 @@ func (c *GetOnlyCache) Load(req *http.Request) (res *http.Response, err error) {
 	if req.Method != http.MethodGet {
 		return nil, errNoCache
 	}
+	seed, err := rcutil.Seed(req, []string{})
+	if err != nil {
+		return nil, err
+	}
+	key := seedToKey(seed)
 	c.mu.Lock()
-	p, ok := c.m[req.URL.Path]
+	p, ok := c.m[key]
 	c.mu.Unlock()
 	if !ok {
 		return nil, errCacheNotFound
@@ -148,12 +165,17 @@ func (c *GetOnlyCache) Store(req *http.Request, res *http.Response) error {
 	if err != nil {
 		return err
 	}
-	p := filepath.Join(c.dir, base64.URLEncoding.EncodeToString([]byte(req.URL.Path)))
+	seed, err := rcutil.Seed(req, []string{})
+	if err != nil {
+		return err
+	}
+	key := seedToKey(seed)
+	p := filepath.Join(c.dir, key)
 	if err := os.WriteFile(p, b, os.ModePerm); err != nil {
 		return err
 	}
 	c.mu.Lock()
-	c.m[req.URL.Path] = p
+	c.m[key] = p
 	c.mu.Unlock()
 	return nil
 }
@@ -161,4 +183,10 @@ func (c *GetOnlyCache) Store(req *http.Request, res *http.Response) error {
 func (c *GetOnlyCache) Hit() int {
 	c.t.Helper()
 	return c.hit
+}
+
+func seedToKey(seed string) string {
+	sha1 := sha1.New()
+	_, _ = io.WriteString(sha1, seed)
+	return hex.EncodeToString(sha1.Sum(nil))
 }

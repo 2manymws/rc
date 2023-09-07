@@ -22,8 +22,8 @@ func TestRC(t *testing.T) {
 	}{
 		{"all cache", []rc.Cacher{testutil.NewAllCache(t)}, []*http.Request{
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
-			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/1")},
-			{Method: http.MethodDelete, URL: testutil.MustParseURL("http://example.com/1")},
+			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
+			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 		}, []*http.Response{
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
@@ -31,8 +31,8 @@ func TestRC(t *testing.T) {
 		}, []int{2}},
 		{"all cache 2", []rc.Cacher{testutil.NewAllCache(t)}, []*http.Request{
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
-			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/2")},
-			{Method: http.MethodDelete, URL: testutil.MustParseURL("http://example.com/1")},
+			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/2")},
+			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 		}, []*http.Response{
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
@@ -52,14 +52,14 @@ func TestRC(t *testing.T) {
 		{"multi cache", []rc.Cacher{testutil.NewGetOnlyCache(t), testutil.NewAllCache(t)}, []*http.Request{
 			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
-			{Method: http.MethodDelete, URL: testutil.MustParseURL("http://example.com/1")},
+			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 		}, []*http.Response{
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
-			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
-			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
-		}, []int{1, 2}},
+			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":2}`)},
+		}, []int{1, 1}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
