@@ -35,9 +35,11 @@ func (rc *cacheMw) Handler(next http.Handler) http.Handler {
 			res  *http.Response
 			body []byte
 			err  error
+			// When use cache, hit is the name of the cacher.
+			hit string
 		)
+
 		// Use cache
-		hit := ""
 		for _, c := range rc.cachers {
 			res, err = c.Load(r)
 			if err != nil {
@@ -46,11 +48,11 @@ func (rc *cacheMw) Handler(next http.Handler) http.Handler {
 			}
 			// Response cache
 			for k, v := range res.Header {
-				setted := false
+				set := false
 				for _, vv := range v {
-					if !setted {
+					if !set {
 						w.Header().Set(k, vv)
-						setted = true
+						set = true
 						continue
 					}
 					w.Header().Add(k, vv)
@@ -71,11 +73,11 @@ func (rc *cacheMw) Handler(next http.Handler) http.Handler {
 			rec := httptest.NewRecorder()
 			next.ServeHTTP(rec, r)
 			for k, v := range rec.Header() {
-				setted := false
+				set := false
 				for _, vv := range v {
-					if !setted {
+					if !set {
 						w.Header().Set(k, vv)
-						setted = true
+						set = true
 						continue
 					}
 					w.Header().Add(k, vv)
