@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/k1LoW/rc"
+	testuc "github.com/k1LoW/rc/testutil"
 	"github.com/k1LoW/rcutil/testutil"
 	"github.com/k1LoW/rp"
 	testur "github.com/k1LoW/rp/testutil"
@@ -57,7 +58,7 @@ func BenchmarkRC(b *testing.B) {
 	upstreams := map[string]string{}
 	upstreams[hostname] = urlstr
 
-	c := testutil.NewAllCache(b)
+	c := testuc.NewAllCache(b)
 	m := rc.New(c)
 	rl := testur.NewRelayer(upstreams)
 	r := rp.NewRouter(rl)
