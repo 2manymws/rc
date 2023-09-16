@@ -75,11 +75,12 @@ func (c *AllCache) Load(req *http.Request) (res *http.Response, err error) {
 	if !ok {
 		return nil, errCacheNotFound
 	}
-	b, err := os.ReadFile(p)
+	f, err := os.Open(p)
 	if err != nil {
 		return nil, errCacheNotFound
 	}
-	res, err = rcutil.BytesToResponse(b)
+	defer f.Close()
+	res, err = rcutil.DecodeResponse(f)
 	if err != nil {
 		return nil, err
 	}
@@ -90,17 +91,18 @@ func (c *AllCache) Load(req *http.Request) (res *http.Response, err error) {
 
 func (c *AllCache) Store(req *http.Request, res *http.Response) error {
 	c.t.Helper()
-	b, err := rcutil.ResponseToBytes(res)
-	if err != nil {
-		return err
-	}
 	seed, err := rcutil.Seed(req, []string{})
 	if err != nil {
 		return err
 	}
 	key := seedToKey(seed)
 	p := filepath.Join(c.dir, key)
-	if err := os.WriteFile(p, b, os.ModePerm); err != nil {
+	f, err := os.Create(p)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if err := rcutil.EncodeResponse(res, f); err != nil {
 		return err
 	}
 	c.mu.Lock()
@@ -143,11 +145,12 @@ func (c *GetOnlyCache) Load(req *http.Request) (res *http.Response, err error) {
 	if !ok {
 		return nil, errCacheNotFound
 	}
-	b, err := os.ReadFile(p)
+	f, err := os.Open(p)
 	if err != nil {
 		return nil, errCacheNotFound
 	}
-	res, err = rcutil.BytesToResponse(b)
+	defer f.Close()
+	res, err = rcutil.DecodeResponse(f)
 	if err != nil {
 		return nil, err
 	}
@@ -161,17 +164,18 @@ func (c *GetOnlyCache) Store(req *http.Request, res *http.Response) error {
 	if req.Method != http.MethodGet {
 		return errNoCache
 	}
-	b, err := rcutil.ResponseToBytes(res)
-	if err != nil {
-		return err
-	}
 	seed, err := rcutil.Seed(req, []string{})
 	if err != nil {
 		return err
 	}
 	key := seedToKey(seed)
 	p := filepath.Join(c.dir, key)
-	if err := os.WriteFile(p, b, os.ModePerm); err != nil {
+	f, err := os.Create(p)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if err := rcutil.EncodeResponse(res, f); err != nil {
 		return err
 	}
 	c.mu.Lock()
