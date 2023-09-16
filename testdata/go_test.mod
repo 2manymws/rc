@@ -5,7 +5,7 @@ go 1.21.0
 require (
 	github.com/google/go-cmp v0.5.9
 	github.com/k1LoW/httpstub v0.11.0
-	github.com/k1LoW/rcutil v0.2.0
+	github.com/k1LoW/rcutil v0.5.0
 	github.com/k1LoW/rp v0.4.3
 )
 
@@ -26,6 +26,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/invopop/yaml v0.1.0 // indirect
+	github.com/jellydator/ttlcache/v3 v3.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/minio/pkg v1.6.5 // indirect
