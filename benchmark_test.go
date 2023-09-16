@@ -52,7 +52,7 @@ func BenchmarkNGINXCache(b *testing.B) {
 	})
 }
 
-func BenchmarkRC(b *testing.B) {
+func BenchmarkRC(b *testing.B) { //nostyle:repetition
 	hostname := "a.example.com"
 	urlstr := testutil.NewUpstreamEchoNGINXServer(b, hostname)
 	upstreams := map[string]string{}
