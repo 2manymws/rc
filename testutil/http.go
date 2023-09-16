@@ -11,8 +11,8 @@ import (
 	"github.com/k1LoW/httpstub"
 )
 
-// NewTestHTTPRouter returns a new test HTTP router
-func NewTestHTTPRouter(t *testing.T) *httpstub.Router {
+// NewHTTPRouter returns a new test HTTP router
+func NewHTTPRouter(t *testing.T) *httpstub.Router {
 	r := httpstub.NewRouter(t)
 	count := 0
 	r.Path("/no-store-header").Handler(func(w http.ResponseWriter, r *http.Request) {

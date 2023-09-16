@@ -29,7 +29,7 @@ func newCacheMw(cachers []Cacher) *cacheMw {
 	}
 }
 
-func (rc *cacheMw) Handler(next http.Handler) http.Handler {
+func (cw *cacheMw) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			res  *http.Response
@@ -40,7 +40,7 @@ func (rc *cacheMw) Handler(next http.Handler) http.Handler {
 		)
 
 		// Use cache
-		for _, c := range rc.cachers {
+		for _, c := range cw.cachers {
 			res, err = c.Load(r)
 			if err != nil {
 				// TODO: log error
@@ -93,7 +93,7 @@ func (rc *cacheMw) Handler(next http.Handler) http.Handler {
 		}
 
 		// Store cache
-		for _, c := range rc.cachers {
+		for _, c := range cw.cachers {
 			if c.Name() == hit {
 				break
 			}
