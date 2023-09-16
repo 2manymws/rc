@@ -14,7 +14,9 @@ benchmark:
 	go test -modfile=testdata/go_test.mod -bench . -benchmem -benchtime 10000x -run Benchmark | octocov-go-test-bench --tee > custom_metrics_benchmark.json
 
 lint:
+	go mod tidy
 	golangci-lint run ./...
+	-@go vet -vettool=`which gostyle` -gostyle.config=$(PWD)/.gostyle.yml ./...
 	rm go.sum
 	git restore go.*
 
