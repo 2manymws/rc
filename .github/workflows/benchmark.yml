@@ -30,7 +30,7 @@ jobs:
           path: main
 
       - name: Run benchmark (main)
-        run: make benchmark
+        run: make depsdev benchmark
         working-directory: main
 
       # - name: Run benchmark using cachegrind (main)
@@ -48,7 +48,7 @@ jobs:
           OCTOCOV_CUSTOM_METRICS_CACHEGRIND: main/custom_metrics_cachegrind.json
 
       - name: Run benchmark
-        run: make benchmark
+        run: make depsdev benchmark
 
       # - name: Run benchmark using cachegrind
       #   run: make cachegrind
