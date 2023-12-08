@@ -50,8 +50,8 @@ github.com/google/go-cmp v0.3.0/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMyw
 github.com/google/go-cmp v0.4.0/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.4/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
-github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
-github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
+github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
+github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 h1:El6M4kTTCOh6aBiKaUGG7oYTSPP8MxqL4YI3kZKwcP4=
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510/go.mod h1:pupxD2MaaD3pAXIBCelhxNneeOaAeabZDe5s4K6zSpQ=
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
@@ -68,8 +68,8 @@ github.com/k1LoW/httpstub v0.11.0 h1:5V6SGu7sx4FvGazZQBeIKnEPRLKsKQvvpyVKPtAerLo
 github.com/k1LoW/httpstub v0.11.0/go.mod h1:PYUmCF/2A7+TPhRPVJ4xSynM0O1x2mIjh+Tzd/DmiG8=
 github.com/k1LoW/rcutil v0.5.0 h1:vPGOqJF9KWuvpFtLYTnCjnEkiIffTvXTRJTh6SxZ9hs=
 github.com/k1LoW/rcutil v0.5.0/go.mod h1:JonI6BX4h7NkuPBoM/TUuebGwYsoApj0+lZkeN3C09o=
-github.com/k1LoW/rp v0.4.3 h1:3oXz6eZEAm8/2FgEynpPZNxx8KbYeRcNmxYotFAEeRg=
-github.com/k1LoW/rp v0.4.3/go.mod h1:yIx02DG7bbtOFNy5us4BWCZ9q4n4u1YnNHo3YlYMQxk=
+github.com/k1LoW/rp v0.8.0 h1:nfrArsglIpdfqBC2Dhg0+7MHDaZhwcOPWwOQlicTHRA=
+github.com/k1LoW/rp v0.8.0/go.mod h1:yIx02DG7bbtOFNy5us4BWCZ9q4n4u1YnNHo3YlYMQxk=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=

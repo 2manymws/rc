@@ -3,10 +3,10 @@ module github.com/k1LoW/rc
 go 1.21.0
 
 require (
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/k1LoW/httpstub v0.11.0
 	github.com/k1LoW/rcutil v0.5.0
-	github.com/k1LoW/rp v0.4.3
+	github.com/k1LoW/rp v0.8.0
 )
 
 require (

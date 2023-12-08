@@ -70,6 +70,7 @@ func (cw *cacheMw) Handler(next http.Handler) http.Handler {
 		}
 
 		if hit == "" {
+			// Record response of next handler ( upstream )
 			rec := httptest.NewRecorder()
 			next.ServeHTTP(rec, r)
 			for k, v := range rec.Header() {
@@ -93,6 +94,7 @@ func (cw *cacheMw) Handler(next http.Handler) http.Handler {
 		}
 
 		// Store cache
+		// If a cache is used, store the response in the cachers before that cacher.
 		for _, c := range cw.cachers {
 			if c.Name() == hit {
 				break

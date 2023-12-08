@@ -24,10 +24,12 @@ func TestRC(t *testing.T) {
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
+			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/2")},
 		}, []*http.Response{
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
 			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
 		}, []int{2}},
 		{"all cache 2", []rc.Cacher{testutil.NewAllCache(t)}, []*http.Request{
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
