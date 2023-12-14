@@ -22,7 +22,7 @@ type Cacher interface {
 
 type Handler interface {
 	// Handle handles the request/response cache.
-	Handle(req *http.Request, cachedReq *http.Request, cachedRes *http.Response, do func(*http.Request) (*http.Response, error), now time.Time) (cacheUsed bool, res *http.Response, err error)
+	Handle(req *http.Request, cachedReq *http.Request, cachedRes *http.Response, originRequester func(*http.Request) (*http.Response, error), now time.Time) (cacheUsed bool, res *http.Response, err error)
 	// Storable returns whether the response is storable and the expiration time.
 	Storable(req *http.Request, res *http.Response, now time.Time) (ok bool, expires time.Time)
 }
@@ -31,7 +31,7 @@ var _ Handler = new(rfc9111.Shared)
 
 type cacher struct {
 	Cacher
-	Handle   func(req *http.Request, cachedReq *http.Request, cachedRes *http.Response, do func(*http.Request) (*http.Response, error), now time.Time) (cacheUsed bool, res *http.Response, err error)
+	Handle   func(req *http.Request, cachedReq *http.Request, cachedRes *http.Response, originRequester func(*http.Request) (*http.Response, error), now time.Time) (cacheUsed bool, res *http.Response, err error)
 	Storable func(req *http.Request, res *http.Response, now time.Time) (ok bool, expires time.Time)
 }
 
@@ -64,8 +64,8 @@ func newCacheMw(c Cacher) *cacheMw {
 func (cw *cacheMw) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		now := time.Now()
-		cachedReq, cachedRes, _ := cw.cacher.Load(req)                                                 //nostyle:handlerrors
-		cacheUsed, res, _ := cw.cacher.Handle(req, cachedReq, cachedRes, HandlerToClientDo(next), now) //nostyle:handlerrors
+		cachedReq, cachedRes, _ := cw.cacher.Load(req)                                                  //nostyle:handlerrors
+		cacheUsed, res, _ := cw.cacher.Handle(req, cachedReq, cachedRes, HandlerToRequester(next), now) //nostyle:handlerrors
 
 		// Response
 		for k, v := range res.Header {
@@ -108,8 +108,8 @@ func New(cacher Cacher) func(next http.Handler) http.Handler {
 	return rl.Handler
 }
 
-// HandlerToClientDo converts http.Handler to func(*http.Request) (*http.Response, error).
-func HandlerToClientDo(h http.Handler) func(*http.Request) (*http.Response, error) {
+// HandlerToRequester converts http.Handler to func(*http.Request) (*http.Response, error).
+func HandlerToRequester(h http.Handler) func(*http.Request) (*http.Response, error) {
 	return func(req *http.Request) (*http.Response, error) {
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, req)
