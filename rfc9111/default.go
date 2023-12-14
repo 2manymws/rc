@@ -3,7 +3,7 @@ package rfc9111
 import "net/http"
 
 var defaultUnderstoodMethods = []string{
-	// Although RFC 9111 does not explicitly define this, in general cacheable methods are GET and HEAD, so the default should be GET and HEAD.
+	// Although not explicitly specified in RFC 9111, allow GET, HEAD, OPTIONS, and TRACE methods, which are specified as safe methods in RFC 9110 (see https://httpwg.org/specs/rfc9110.html#rfc.section.9.2.1).
 	http.MethodGet,
 	http.MethodHead,
 	// http.MethodPost,
@@ -11,8 +11,8 @@ var defaultUnderstoodMethods = []string{
 	// http.MethodPatch,
 	// http.MethodDelete,
 	// http.MethodConnect,
-	// http.MethodOptions,
-	// http.MethodTrace,
+	http.MethodOptions,
+	http.MethodTrace,
 }
 
 var defaultUnderstoodStatusCodes = []int{
