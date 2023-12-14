@@ -5,111 +5,116 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"time"
+
+	"github.com/k1LoW/rc/rfc9111"
 )
 
 type Cacher interface {
-	// Name returns the name of the cacher.
-	Name() string
-	// Load loads the response cache.
+	// Load loads the request/response cache.
 	// If the cache is not found, it returns ErrCacheNotFound.
 	// If not caching, it returns ErrNoCache.
 	// If the cache is expired, it returns ErrCacheExpired.
-	Load(req *http.Request) (res *http.Response, err error)
+	Load(req *http.Request) (cachedReq *http.Request, cachedRes *http.Response, err error)
 	// Store stores the response cache.
 	Store(req *http.Request, res *http.Response) error
 }
 
-type cacheMw struct {
-	cachers []Cacher
+type Handler interface {
+	// Handle handles the request/response cache.
+	Handle(req *http.Request, cachedReq *http.Request, cachedRes *http.Response, do func(*http.Request) (*http.Response, error), now time.Time) (cacheUsed bool, res *http.Response, err error)
+	// Storable returns whether the response is storable and the expiration time.
+	Storable(req *http.Request, res *http.Response, now time.Time) (ok bool, expires time.Time)
 }
 
-func newCacheMw(cachers []Cacher) *cacheMw {
+var _ Handler = new(rfc9111.Shared)
+
+type cacher struct {
+	Cacher
+	Handle   func(req *http.Request, cachedReq *http.Request, cachedRes *http.Response, do func(*http.Request) (*http.Response, error), now time.Time) (cacheUsed bool, res *http.Response, err error)
+	Storable func(req *http.Request, res *http.Response, now time.Time) (ok bool, expires time.Time)
+}
+
+func newCacher(c Cacher) *cacher {
+	cc := &cacher{
+		Cacher: c,
+	}
+	if v, ok := c.(Handler); ok {
+		cc.Handle = v.Handle
+		cc.Storable = v.Storable
+	} else {
+		s, _ := rfc9111.NewShared()
+		cc.Handle = s.Handle
+		cc.Storable = s.Storable
+	}
+	return cc
+}
+
+type cacheMw struct {
+	cacher *cacher
+}
+
+func newCacheMw(c Cacher) *cacheMw {
+	cc := newCacher(c)
 	return &cacheMw{
-		cachers: cachers,
+		cacher: cc,
 	}
 }
 
 func (cw *cacheMw) Handler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var (
-			res  *http.Response
-			body []byte
-			err  error
-			// When use cache, hit is the name of the cacher.
-			hit string
-		)
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		now := time.Now()
+		cachedReq, cachedRes, _ := cw.cacher.Load(req)
+		cacheUsed, res, _ := cw.cacher.Handle(req, cachedReq, cachedRes, HandlerToClientDo(next), now)
 
-		// Use cache
-		for _, c := range cw.cachers {
-			res, err = c.Load(r)
-			if err != nil {
-				// TODO: log error
-				continue
-			}
-			// Response cache
-			for k, v := range res.Header {
-				set := false
-				for _, vv := range v {
-					if !set {
-						w.Header().Set(k, vv)
-						set = true
-						continue
-					}
-					w.Header().Add(k, vv)
+		// Response
+		for k, v := range res.Header {
+			set := false
+			for _, vv := range v {
+				if !set {
+					w.Header().Set(k, vv)
+					set = true
+					continue
 				}
+				w.Header().Add(k, vv)
 			}
-			w.WriteHeader(res.StatusCode)
-			body, err = io.ReadAll(res.Body)
-			if err == nil {
-				_ = res.Body.Close()
-				_, _ = w.Write(body)
-			}
+		}
+		w.WriteHeader(res.StatusCode)
+		body, err := io.ReadAll(res.Body)
+		if err == nil {
 			_ = res.Body.Close()
-			hit = c.Name()
-			break
+			_, _ = w.Write(body)
 		}
+		_ = res.Body.Close()
 
-		if hit == "" {
-			// Record response of next handler ( upstream )
-			rec := httptest.NewRecorder()
-			next.ServeHTTP(rec, r)
-			for k, v := range rec.Header() {
-				set := false
-				for _, vv := range v {
-					if !set {
-						w.Header().Set(k, vv)
-						set = true
-						continue
-					}
-					w.Header().Add(k, vv)
-				}
-			}
-			w.WriteHeader(rec.Code)
-			_, _ = w.Write(rec.Body.Bytes())
-			body = rec.Body.Bytes()
-			res = &http.Response{
-				StatusCode: rec.Code,
-				Header:     rec.Header(),
-			}
+		if cacheUsed {
+			return
 		}
+		ok, _ := cw.cacher.Storable(req, res, now)
+		if !ok {
+			return
+		}
+		// Restore response body
+		res.Body = io.NopCloser(bytes.NewReader(body))
 
-		// Store cache
-		// If a cache is used, store the response in the cachers before that cacher.
-		for _, c := range cw.cachers {
-			if c.Name() == hit {
-				break
-			}
-			// Restore body
-			res.Body = io.NopCloser(bytes.NewReader(body))
-			// TODO: log error
-			_ = c.Store(r, res)
-		}
+		// Store response as cache
+		_ = cw.cacher.Store(req, res)
 	})
 }
 
 // New returns a new response cache middleware.
-// The order of the cachers is arranged in order of high-speed cache, such as CPU L1 cache and L2 cache.
-func New(cachers ...Cacher) func(next http.Handler) http.Handler {
-	rl := newCacheMw(cachers)
+func New(cacher Cacher) func(next http.Handler) http.Handler {
+	rl := newCacheMw(cacher)
 	return rl.Handler
+}
+
+// HandlerToClientDo converts http.Handler to func(*http.Request) (*http.Response, error).
+func HandlerToClientDo(h http.Handler) func(*http.Request) (*http.Response, error) {
+	return func(req *http.Request) (*http.Response, error) {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		res := rec.Result()
+		res.Header = rec.Header()
+		return res, nil
+	}
 }
