@@ -6,12 +6,9 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
-
-	"github.com/k1LoW/rcutil"
 )
 
 var (
@@ -26,15 +23,14 @@ var errCacheNotFound error = errors.New("cache not found")
 var errNoCache error = errors.New("no cache")
 
 type Cacher interface {
-	Name() string
-	Load(req *http.Request) (res *http.Response, err error)
+	Load(req *http.Request) (cachedReq *http.Request, cachedRes *http.Response, err error)
 	Store(req *http.Request, res *http.Response) error
 	Hit() int
 }
 
 type AllCache struct {
 	t   testing.TB
-	m   map[string]string
+	m   map[string]*cachedReqRes
 	dir string
 	hit int
 	mu  sync.Mutex
@@ -42,7 +38,7 @@ type AllCache struct {
 
 type GetOnlyCache struct {
 	t   testing.TB
-	m   map[string]string
+	m   map[string]*cachedReqRes
 	dir string
 	hit int
 	mu  sync.Mutex
@@ -52,61 +48,38 @@ func NewAllCache(t testing.TB) *AllCache {
 	t.Helper()
 	return &AllCache{
 		t:   t,
-		m:   map[string]string{},
+		m:   map[string]*cachedReqRes{},
 		dir: t.TempDir(),
 	}
 }
 
-func (c *AllCache) Name() string {
+func (c *AllCache) Load(req *http.Request) (*http.Request, *http.Response, error) {
 	c.t.Helper()
-	return "all"
-}
-
-func (c *AllCache) Load(req *http.Request) (res *http.Response, err error) {
-	c.t.Helper()
-	seed, err := rcutil.Seed(req, []string{})
-	if err != nil {
-		return nil, err
-	}
-	key := seedToKey(seed)
+	key := reqToKey(req)
 	c.mu.Lock()
-	p, ok := c.m[key]
+	cc, ok := c.m[key]
 	c.mu.Unlock()
 	if !ok {
-		return nil, errCacheNotFound
+		return nil, nil, errCacheNotFound
 	}
-	f, err := os.Open(p)
+	cachedReq, cachedRes, err := decodeReqRes(cc)
 	if err != nil {
-		return nil, errCacheNotFound
+		return nil, nil, err
 	}
-	defer f.Close()
-	res, err = rcutil.DecodeResponse(f)
-	if err != nil {
-		return nil, err
-	}
-	res.Header.Set("X-Cache", "HIT")
+	cachedRes.Header.Set("X-Cache", "HIT")
 	c.hit++
-	return res, nil
+	return cachedReq, cachedRes, nil
 }
 
 func (c *AllCache) Store(req *http.Request, res *http.Response) error {
 	c.t.Helper()
-	seed, err := rcutil.Seed(req, []string{})
+	key := reqToKey(req)
+	cc, err := encodeReqRes(req, res)
 	if err != nil {
-		return err
-	}
-	key := seedToKey(seed)
-	p := filepath.Join(c.dir, key)
-	f, err := os.Create(p)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	if err := rcutil.EncodeResponse(res, f); err != nil {
 		return err
 	}
 	c.mu.Lock()
-	c.m[key] = p
+	c.m[key] = cc
 	c.mu.Unlock()
 	return nil
 }
@@ -119,44 +92,30 @@ func NewGetOnlyCache(t testing.TB) *GetOnlyCache {
 	t.Helper()
 	return &GetOnlyCache{
 		t:   t,
-		m:   map[string]string{},
+		m:   map[string]*cachedReqRes{},
 		dir: t.TempDir(),
 	}
 }
 
-func (c *GetOnlyCache) Name() string {
-	c.t.Helper()
-	return "get-only"
-}
-
-func (c *GetOnlyCache) Load(req *http.Request) (res *http.Response, err error) {
+func (c *GetOnlyCache) Load(req *http.Request) (*http.Request, *http.Response, error) {
 	c.t.Helper()
 	if req.Method != http.MethodGet {
-		return nil, errNoCache
+		return nil, nil, errNoCache
 	}
-	seed, err := rcutil.Seed(req, []string{})
-	if err != nil {
-		return nil, err
-	}
-	key := seedToKey(seed)
+	key := reqToKey(req)
 	c.mu.Lock()
-	p, ok := c.m[key]
+	cc, ok := c.m[key]
 	c.mu.Unlock()
 	if !ok {
-		return nil, errCacheNotFound
+		return nil, nil, errCacheNotFound
 	}
-	f, err := os.Open(p)
+	cachedReq, cachedRes, err := decodeReqRes(cc)
 	if err != nil {
-		return nil, errCacheNotFound
+		return nil, nil, err
 	}
-	defer f.Close()
-	res, err = rcutil.DecodeResponse(f)
-	if err != nil {
-		return nil, err
-	}
-	res.Header.Set("X-Cache", "HIT")
+	cachedRes.Header.Set("X-Cache", "HIT")
 	c.hit++
-	return res, nil
+	return cachedReq, cachedRes, nil
 }
 
 func (c *GetOnlyCache) Store(req *http.Request, res *http.Response) error {
@@ -164,22 +123,13 @@ func (c *GetOnlyCache) Store(req *http.Request, res *http.Response) error {
 	if req.Method != http.MethodGet {
 		return errNoCache
 	}
-	seed, err := rcutil.Seed(req, []string{})
+	key := reqToKey(req)
+	cc, err := encodeReqRes(req, res)
 	if err != nil {
-		return err
-	}
-	key := seedToKey(seed)
-	p := filepath.Join(c.dir, key)
-	f, err := os.Create(p)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	if err := rcutil.EncodeResponse(res, f); err != nil {
 		return err
 	}
 	c.mu.Lock()
-	c.m[key] = p
+	c.m[key] = cc
 	c.mu.Unlock()
 	return nil
 }
@@ -189,8 +139,10 @@ func (c *GetOnlyCache) Hit() int {
 	return c.hit
 }
 
-func seedToKey(seed string) string {
+func reqToKey(req *http.Request) string {
+	const sep = "|"
+	seed := req.Method + sep + req.URL.Path + sep + req.URL.RawQuery
 	sha1 := sha1.New()
-	_, _ = io.WriteString(sha1, seed)
+	_, _ = io.WriteString(sha1, strings.ToLower(seed))
 	return hex.EncodeToString(sha1.Sum(nil))
 }

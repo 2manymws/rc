@@ -26,6 +26,7 @@ func NewHTTPRouter(t *testing.T) *httpstub.Router {
 		count++
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "max-age=60")
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"count":%d}`, count)))
 	})
 	return r
