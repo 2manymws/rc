@@ -20,9 +20,36 @@ type Shared struct {
 // SharedOption is an option for Shared.
 type SharedOption func(*Shared) error
 
+// UnderstoodMethods sets the understood methods.
+func UnderstoodMethods(methods []string) SharedOption {
+	return func(s *Shared) error {
+		s.understoodMethods = methods
+		return nil
+	}
+}
+
+// UnderstoodStatusCodes sets the understood status codes.
+func UnderstoodStatusCodes(statusCodes []int) SharedOption {
+	return func(s *Shared) error {
+		s.understoodStatusCodes = statusCodes
+		return nil
+	}
+}
+
+// HeuristicallyCacheableStatusCodes sets the heuristically cacheable status codes.
+func HeuristicallyCacheableStatusCodes(statusCodes []int) SharedOption {
+	return func(s *Shared) error {
+		s.heuristicallyCacheableStatusCodes = statusCodes
+		return nil
+	}
+}
+
 // HeuristicExpirationRatio sets the heuristic expiration ratio.
 func HeuristicExpirationRatio(ratio float64) SharedOption {
 	return func(s *Shared) error {
+		if ratio < 0 {
+			return ErrNegativeRatio
+		}
 		s.heuristicExpirationRatio = ratio
 		return nil
 	}
