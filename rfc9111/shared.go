@@ -48,7 +48,7 @@ func HeuristicallyCacheableStatusCodes(statusCodes []int) SharedOption {
 func HeuristicExpirationRatio(ratio float64) SharedOption {
 	return func(s *Shared) error {
 		if ratio < 0 {
-			return ErrInvalidHeuristicExpirationRatio
+			return ErrNegativeRatio
 		}
 		s.heuristicExpirationRatio = ratio
 		return nil
