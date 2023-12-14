@@ -556,7 +556,7 @@ func TestShared_Handle(t *testing.T) {
 			origin200res,
 		},
 		{
-			"Use origin response (Cache-Control: no-cache)",
+			"Use origin response (Cache-Control: no-cache, max-age=60)",
 			&http.Request{
 				URL:    endpoint,
 				Method: http.MethodGet,
@@ -571,12 +571,64 @@ func TestShared_Handle(t *testing.T) {
 				StatusCode: http.StatusOK,
 				Header: http.Header{
 					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
+					"Cache-Control": []string{"no-cache, max-age=60"},
+				},
+			},
+			do200,
+			false,
+			origin200res,
+		},
+		{
+			"Use origin response (POST Cache-Control: no-cache)",
+			&http.Request{
+				URL:    endpoint,
+				Method: http.MethodPost,
+				Header: http.Header{},
+			},
+			&http.Request{
+				URL:    endpoint,
+				Method: http.MethodPost,
+				Header: http.Header{},
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
 					"Cache-Control": []string{"no-cache"},
 				},
 			},
 			do200,
 			false,
 			origin200res,
+		},
+		{
+			"Use cache response (Cache-Control: no-cache, max-age=60)",
+			&http.Request{
+				URL:    endpoint,
+				Method: http.MethodGet,
+				Header: http.Header{},
+			},
+			&http.Request{
+				URL:    endpoint,
+				Method: http.MethodGet,
+				Header: http.Header{},
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
+					"Cache-Control": []string{"no-cache, max-age=60"},
+				},
+			},
+			do304,
+			true,
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
+					"Cache-Control": []string{"no-cache, max-age=60"},
+				},
+			},
 		},
 		{
 			"Validate and use origin response",
