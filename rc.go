@@ -21,7 +21,9 @@ type Cacher interface {
 }
 
 type Handler interface {
+	// Handle handles the request/response cache.
 	Handle(req *http.Request, cachedReq *http.Request, cachedRes *http.Response, do func(*http.Request) (*http.Response, error), now time.Time) (cacheUsed bool, res *http.Response, err error)
+	// Storable returns whether the response is storable and the expiration time.
 	Storable(req *http.Request, res *http.Response, now time.Time) (ok bool, expires time.Time)
 }
 
@@ -101,7 +103,6 @@ func (cw *cacheMw) Handler(next http.Handler) http.Handler {
 }
 
 // New returns a new response cache middleware.
-// The order of the cachers is arranged in order of high-speed cache, such as CPU L1 cache and L2 cache.
 func New(cacher Cacher) func(next http.Handler) http.Handler {
 	rl := newCacheMw(cacher)
 	return rl.Handler
