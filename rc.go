@@ -43,7 +43,7 @@ func newCacher(c Cacher) *cacher {
 		cc.Handle = v.Handle
 		cc.Storable = v.Storable
 	} else {
-		s, _ := rfc9111.NewShared()
+		s, _ := rfc9111.NewShared() //nostyle:handlerrors
 		cc.Handle = s.Handle
 		cc.Storable = s.Storable
 	}
@@ -64,8 +64,8 @@ func newCacheMw(c Cacher) *cacheMw {
 func (cw *cacheMw) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		now := time.Now()
-		cachedReq, cachedRes, _ := cw.cacher.Load(req)
-		cacheUsed, res, _ := cw.cacher.Handle(req, cachedReq, cachedRes, HandlerToClientDo(next), now)
+		cachedReq, cachedRes, _ := cw.cacher.Load(req)                                                 //nostyle:handlerrors
+		cacheUsed, res, _ := cw.cacher.Handle(req, cachedReq, cachedRes, HandlerToClientDo(next), now) //nostyle:handlerrors
 
 		// Response
 		for k, v := range res.Header {
@@ -82,10 +82,10 @@ func (cw *cacheMw) Handler(next http.Handler) http.Handler {
 		w.WriteHeader(res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if err == nil {
-			_ = res.Body.Close()
-			_, _ = w.Write(body)
+			_ = res.Body.Close() //nostyle:handlerrors
+			_, _ = w.Write(body) //nostyle:handlerrors
 		}
-		_ = res.Body.Close()
+		_ = res.Body.Close() //nostyle:handlerrors
 
 		if cacheUsed {
 			return
@@ -98,7 +98,7 @@ func (cw *cacheMw) Handler(next http.Handler) http.Handler {
 		res.Body = io.NopCloser(bytes.NewReader(body))
 
 		// Store response as cache
-		_ = cw.cacher.Store(req, res)
+		_ = cw.cacher.Store(req, res) //nostyle:handlerrors
 	})
 }
 

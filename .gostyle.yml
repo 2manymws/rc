@@ -5,6 +5,10 @@ analyzers-settings:
   repetition:
     exclude:
       - urlstr
+  errorstrings:
+    exclude-test: true
+  handlerrors:
+    exclude-test: true
   ifacenames:
     all: true
   varnames:

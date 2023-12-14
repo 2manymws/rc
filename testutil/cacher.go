@@ -143,6 +143,6 @@ func reqToKey(req *http.Request) string {
 	const sep = "|"
 	seed := req.Method + sep + req.URL.Path + sep + req.URL.RawQuery
 	sha1 := sha1.New()
-	_, _ = io.WriteString(sha1, strings.ToLower(seed))
+	_, _ = io.WriteString(sha1, strings.ToLower(seed)) //nostyle:handlerrors
 	return hex.EncodeToString(sha1.Sum(nil))
 }
