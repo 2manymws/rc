@@ -204,7 +204,7 @@ func TestShared_Storable(t *testing.T) {
 			time.Time{},
 		},
 		{
-			"GET 500 Cache-Control: public, Last-Modified 2024-12-13 14:15:06 -> +1s",
+			"GET 200 Cache-Control: public, Last-Modified 2024-12-13 14:15:06 -> +1s",
 			&http.Request{
 				Method: http.MethodGet,
 			},
@@ -219,7 +219,22 @@ func TestShared_Storable(t *testing.T) {
 			time.Date(2024, 12, 13, 14, 15, 17, 00, time.UTC),
 		},
 		{
-			"GET 500 Cache-Control: public -> No Store",
+			"POST 201 Cache-Control: public, Last-Modified 2024-12-13 14:15:06 -> No Store",
+			&http.Request{
+				Method: http.MethodPost,
+			},
+			&http.Response{
+				StatusCode: http.StatusCreated,
+				Header: http.Header{
+					"Last-Modified": []string{"Mon, 13 Dec 2024 14:15:06 GMT"},
+					"Cache-Control": []string{"public"},
+				},
+			},
+			false,
+			time.Time{},
+		},
+		{
+			"GET 200 Cache-Control: public (only) -> No Store",
 			&http.Request{
 				Method: http.MethodGet,
 			},
