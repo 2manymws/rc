@@ -173,12 +173,30 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 		}
 	}
 
-	// - the stored response does not contain the no-cache directive (https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.4), unless it is successfully validated (https://www.rfc-editor.org/rfc/rfc9111#section-4.3), and
 	rescc := ParseResponseCacheControlHeader(cachedRes.Header.Values("Cache-Control"))
 
+	// - the stored response does not contain the no-cache directive (https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.4), unless it is successfully validated (https://www.rfc-editor.org/rfc/rfc9111#section-4.3)
 	if rescc.NoCache {
-		res, err := do(req)
-		return false, res, err
+		// The no-cache response directive, in its unqualified form (without an argument), indicates that the response MUST NOT be used to satisfy any other request without forwarding it for validation and receiving a successful response; see https://www.rfc-editor.org/rfc/rfc9111#section-4.3.
+		if req.Method == http.MethodGet || req.Method == http.MethodHead {
+			if cachedRes.Header.Get("ETag") != "" {
+				req.Header.Set("If-None-Match", cachedRes.Header.Get("ETag"))
+			}
+			if cachedRes.Header.Get("Last-Modified") != "" {
+				req.Header.Set("If-Modified-Since", cachedRes.Header.Get("Last-Modified"))
+			}
+			res, err := do(req)
+			if err != nil {
+				return false, res, err
+			}
+			if res.StatusCode != http.StatusNotModified {
+				return false, res, nil
+			}
+			// The qualified form of the no-cache response directive, with an argument that lists one or more field names, indicates that a cache MAY use the response to satisfy a subsequent request, subject to any other restrictions on caching, if the listed header fields are excluded from the subsequent response or the subsequent response has been successfully revalidated with the origin server (updating or removing those fields).
+		} else {
+			res, err := do(req)
+			return false, res, err
+		}
 	}
 
 	expires := CalclateExpires(rescc, cachedRes.Header, s.heuristicExpirationRatio, now)
