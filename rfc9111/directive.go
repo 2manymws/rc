@@ -6,42 +6,42 @@ import (
 )
 
 type RequestDirectives struct {
-	// max-age https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.1.
+	// max-age https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.1.
 	MaxAge *uint32
-	// max-stale https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.2.
+	// max-stale https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.2.
 	MaxStale *uint32
-	// min-fresh https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.3.
+	// min-fresh https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.3.
 	MinFresh *uint32
-	// no-cache https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.4.
+	// no-cache https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.4.
 	NoCache bool
-	// no-store https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.5.
+	// no-store https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.5.
 	NoStore bool
-	// no-transform https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.6.
+	// no-transform https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.6.
 	NoTransform bool
-	// only-if-cached https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.7.
+	// only-if-cached https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.7.
 	OnlyIfCached bool
 }
 
 type ResponseDirectives struct {
-	// max-age https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.1.
+	// max-age https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.1.
 	MaxAge *uint32
-	// must-revalidate https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.2.
+	// must-revalidate https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.2.
 	MustRevalidate bool
-	// must-understand https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.3.
+	// must-understand https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.3.
 	MustUnderstand bool
-	// no-cache https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.4.
+	// no-cache https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.4.
 	NoCache bool
-	// no-store https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.5.
+	// no-store https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.5.
 	NoStore bool
-	// no-transform https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.6.
+	// no-transform https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.6.
 	NoTransform bool
-	// private https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.7.
+	// private https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.7.
 	Private bool
-	// proxy-revalidate https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.8.
+	// proxy-revalidate https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.8.
 	ProxyRevalidate bool
-	// public https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.9.
+	// public https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.9.
 	Public bool
-	// s-maxag https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.10.
+	// s-maxag https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.10.
 	SMaxAge *uint32
 }
 
@@ -87,7 +87,7 @@ func ParseRequestCacheControlHeader(headers []string) *RequestDirectives {
 			case t == "only-if-cached":
 				d.OnlyIfCached = true
 			default:
-				// A cache MUST ignore unrecognized cache directives. (https://www.rfc-editor.org/rfc/rfc9111#section-5.2.3)
+				// A cache MUST ignore unrecognized cache directives. (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.3)
 			}
 		}
 	}
@@ -136,7 +136,7 @@ func ParseResponseCacheControlHeader(headers []string) *ResponseDirectives {
 				u32 := uint32(u64)
 				d.SMaxAge = &u32
 			default:
-				// A cache MUST ignore unrecognized cache directives. (https://www.rfc-editor.org/rfc/rfc9111#section-5.2.3)
+				// A cache MUST ignore unrecognized cache directives. (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.3)
 			}
 		}
 	}
