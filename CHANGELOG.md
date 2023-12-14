@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.4.1](https://github.com/k1LoW/rc/compare/v0.4.0...v0.4.1) - 2023-12-14
+### Other Changes
+- Rename ErrDoNotUseCache to ErrShouldNotUseCache by @k1LoW in https://github.com/k1LoW/rc/pull/19
+- Rename do to originRequester by @k1LoW in https://github.com/k1LoW/rc/pull/20
+
 ## [v0.4.0](https://github.com/k1LoW/rc/compare/v0.3.1...v0.4.0) - 2023-12-14
 ### Breaking Changes 🛠
 - Change the interface to be ready for RFC 9111 by @k1LoW in https://github.com/k1LoW/rc/pull/18
