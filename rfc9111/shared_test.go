@@ -288,8 +288,8 @@ func TestShared_Storable(t *testing.T) {
 func TestShared_Handle(t *testing.T) {
 	// 2024-12-13 14:15:16
 	now := time.Date(2024, 12, 13, 14, 15, 16, 00, time.UTC)
-	fresh := now.Add(15 * time.Second)
-	stale := now.Add(-15 * time.Second)
+	before15sec := now.Add(-15 * time.Second)
+	before30sec := now.Add(-30 * time.Second)
 
 	endpoint, err := url.Parse("https://example.com/api/v1/path/to/resource")
 	if err != nil {
@@ -302,17 +302,21 @@ func TestShared_Handle(t *testing.T) {
 
 	origin200res := &http.Response{
 		StatusCode: http.StatusOK,
-		Header:     http.Header{},
-	}
-	origin304res := &http.Response{
-		StatusCode: http.StatusNotModified,
-		Header:     http.Header{},
+		Header: http.Header{
+			"Age": []string{"0"},
+		},
 	}
 	do200 := func(req *http.Request) (*http.Response, error) {
-		return origin200res, nil
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{},
+		}, nil
 	}
 	do304 := func(req *http.Request) (*http.Response, error) {
-		return origin304res, nil
+		return &http.Response{
+			StatusCode: http.StatusNotModified,
+			Header:     http.Header{},
+		}, nil
 	}
 	tests := []struct {
 		name          string
@@ -348,7 +352,7 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
+					"Last-Modified": []string{before15sec.Format(http.TimeFormat)},
 				},
 			},
 			do200,
@@ -368,7 +372,7 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
+					"Last-Modified": []string{before15sec.Format(http.TimeFormat)},
 				},
 			},
 			do200,
@@ -389,7 +393,8 @@ func TestShared_Handle(t *testing.T) {
 				StatusCode: http.StatusOK,
 				Header: http.Header{
 					"Vary":          []string{"*"},
-					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20"},
+					"Last-Modified": []string{before15sec.Format(http.TimeFormat)},
 				},
 			},
 			do200,
@@ -409,8 +414,9 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
-					"Date":          []string{fresh.Format(http.TimeFormat)},
+					"Last-Modified": []string{before15sec.Format(http.TimeFormat)},
+					"Date":          []string{before15sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20"},
 				},
 			},
 			do200,
@@ -418,8 +424,10 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
-					"Date":          []string{fresh.Format(http.TimeFormat)},
+					"Age":           []string{"15"},
+					"Last-Modified": []string{before15sec.Format(http.TimeFormat)},
+					"Date":          []string{before15sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20"},
 				},
 			},
 		},
@@ -436,8 +444,9 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{stale.Format(http.TimeFormat)},
-					"Date":          []string{stale.Format(http.TimeFormat)},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20"},
 				},
 			},
 			do200,
@@ -445,8 +454,10 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{stale.Format(http.TimeFormat)},
-					"Date":          []string{stale.Format(http.TimeFormat)},
+					"Age":           []string{"30"},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20"},
 				},
 			},
 		},
@@ -466,8 +477,8 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{stale.Format(http.TimeFormat)},
-					"Date":          []string{stale.Format(http.TimeFormat)},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
 				},
 			},
 			do200,
@@ -475,12 +486,12 @@ func TestShared_Handle(t *testing.T) {
 			origin200res,
 		},
 		{
-			"Use stale cached response (Cache-Control: max-stale=20)",
+			"Use stale cached response (Cache-Control: max-stale=40)",
 			&http.Request{
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{
-					"Cache-Control": []string{"max-stale=20"},
+					"Cache-Control": []string{"max-stale=40"},
 				},
 			},
 			&http.Request{
@@ -490,8 +501,8 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{stale.Format(http.TimeFormat)},
-					"Date":          []string{stale.Format(http.TimeFormat)},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
 				},
 			},
 			do200,
@@ -499,8 +510,9 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{stale.Format(http.TimeFormat)},
-					"Date":          []string{stale.Format(http.TimeFormat)},
+					"Age":           []string{"30"},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
 				},
 			},
 		},
@@ -525,8 +537,9 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
-					"Date":          []string{fresh.Format(http.TimeFormat)},
+					"Last-Modified": []string{before15sec.Format(http.TimeFormat)},
+					"Date":          []string{before15sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20"},
 					"Vary":          []string{"content-type, user-agent"},
 				},
 			},
@@ -535,8 +548,10 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
-					"Date":          []string{fresh.Format(http.TimeFormat)},
+					"Age":           []string{"15"},
+					"Last-Modified": []string{before15sec.Format(http.TimeFormat)},
+					"Date":          []string{before15sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20"},
 					"Vary":          []string{"content-type, user-agent"},
 				},
 			},
@@ -562,7 +577,8 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
+					"Last-Modified": []string{before15sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20"},
 					"Vary":          []string{"content-type, user-agent"},
 				},
 			},
@@ -585,7 +601,7 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
 					"Cache-Control": []string{"no-cache, max-age=60"},
 				},
 			},
@@ -608,7 +624,7 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
+					"Last-Modified": []string{before15sec.Format(http.TimeFormat)},
 					"Cache-Control": []string{"no-cache"},
 				},
 			},
@@ -631,7 +647,7 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
+					"Last-Modified": []string{before15sec.Format(http.TimeFormat)},
 					"Cache-Control": []string{"no-cache, max-age=60"},
 				},
 			},
@@ -640,7 +656,7 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{fresh.Format(http.TimeFormat)},
+					"Last-Modified": []string{before15sec.Format(http.TimeFormat)},
 					"Cache-Control": []string{"no-cache, max-age=60"},
 				},
 			},
@@ -660,8 +676,8 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{stale.Format(http.TimeFormat)},
-					"Date":          []string{stale.Format(http.TimeFormat)},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
 					"Cache-Control": []string{"must-revalidate"},
 				},
 			},
@@ -684,8 +700,8 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{stale.Format(http.TimeFormat)},
-					"Date":          []string{stale.Format(http.TimeFormat)},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
 					"Cache-Control": []string{"must-revalidate"},
 				},
 			},
@@ -694,8 +710,9 @@ func TestShared_Handle(t *testing.T) {
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
-					"Last-Modified": []string{stale.Format(http.TimeFormat)},
-					"Date":          []string{stale.Format(http.TimeFormat)},
+					"Age":           []string{"30"},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
 					"Cache-Control": []string{"must-revalidate"},
 				},
 			},
@@ -704,7 +721,6 @@ func TestShared_Handle(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			//t.Parallel()
 			s, err := NewShared()
 			if err != nil {
 				t.Errorf("Shared.Handle() error = %v", err)
@@ -772,7 +788,6 @@ func TestShared_SharedOption(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			s, err := NewShared(tt.opts...)
 			if err != nil {
 				t.Errorf("Shared.Storable() error = %v", err)
