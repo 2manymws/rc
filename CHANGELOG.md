@@ -1,5 +1,7 @@
 # Changelog
 
+## [v0.5.2](https://github.com/2manymws/rc/compare/v0.5.1...v0.5.2) - 2023-12-15
+
 ## [v0.5.1](https://github.com/2manymws/rc/compare/v0.5.0...v0.5.1) - 2023-12-15
 ### Fix bug 🐛
 - For SNI compatibility, also compare req.Host by @k1LoW in https://github.com/2manymws/rc/pull/29
