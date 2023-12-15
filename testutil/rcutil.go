@@ -11,6 +11,7 @@ import (
 
 type cachedReqRes struct {
 	Method    string      `json:"method"`
+	Host      string      `json:"host"`
 	URL       string      `json:"url"`
 	ReqHeader http.Header `json:"req_header"`
 	ReqBody   []byte      `json:"req_body"`
@@ -24,6 +25,7 @@ type cachedReqRes struct {
 func encodeReqRes(req *http.Request, res *http.Response) (*cachedReqRes, error) {
 	c := &cachedReqRes{
 		Method:    req.Method,
+		Host:      req.Host,
 		URL:       req.URL.String(),
 		ReqHeader: req.Header,
 
@@ -61,6 +63,7 @@ func decodeReqRes(c *cachedReqRes) (*http.Request, *http.Response, error) {
 	}
 	req := &http.Request{
 		Method: c.Method,
+		Host:   c.Host,
 		URL:    u,
 		Header: c.ReqHeader,
 		Body:   io.NopCloser(bytes.NewReader(c.ReqBody)),
