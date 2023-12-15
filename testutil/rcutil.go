@@ -1,6 +1,6 @@
 package testutil
 
-// Copy from github.com/k1LoW/rcutil
+// Copy from github.com/2manymws/rcutil
 
 import (
 	"bytes"

@@ -33,4 +33,4 @@ func main() {
 
 ## Utility functions
 
-See https://github.com/k1LoW/rcutil
+See https://github.com/2manymws/rcutil
