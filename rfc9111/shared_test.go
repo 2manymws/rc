@@ -721,7 +721,6 @@ func TestShared_Handle(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			//t.Parallel()
 			s, err := NewShared()
 			if err != nil {
 				t.Errorf("Shared.Handle() error = %v", err)
@@ -789,7 +788,6 @@ func TestShared_SharedOption(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			s, err := NewShared(tt.opts...)
 			if err != nil {
 				t.Errorf("Shared.Storable() error = %v", err)
