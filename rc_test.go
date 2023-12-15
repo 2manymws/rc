@@ -6,10 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/2manymws/rc"
+	"github.com/2manymws/rc/testutil"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/k1LoW/rc"
-	"github.com/k1LoW/rc/testutil"
 )
 
 func TestRC(t *testing.T) {

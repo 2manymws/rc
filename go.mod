@@ -1,3 +1,3 @@
-module github.com/k1LoW/rc
+module github.com/2manymwss/rc
 
 go 1.21.5

@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"time"
 
-	"github.com/k1LoW/rc/rfc9111"
+	"github.com/2manymws/rc/rfc9111"
 )
 
 type Cacher interface {
