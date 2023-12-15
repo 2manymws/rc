@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.5.1](https://github.com/2manymws/rc/compare/v0.5.0...v0.5.1) - 2023-12-15
+### Fix bug 🐛
+- For SNI compatibility, also compare req.Host by @k1LoW in https://github.com/2manymws/rc/pull/29
+
 ## [v0.5.0](https://github.com/k1LoW/rc/compare/v0.4.1...v0.5.0) - 2023-12-15
 ### Breaking Changes 🛠
 - Support Age header by @k1LoW in https://github.com/k1LoW/rc/pull/28
