@@ -163,7 +163,12 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 	return false, time.Time{}
 }
 
-func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *http.Response, do func(*http.Request) (*http.Response, error), now time.Time) (bool, *http.Response, error) {
+func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *http.Response, do func(*http.Request) (*http.Response, error), now time.Time) (useCached bool, r *http.Response, _ error) {
+	defer func() {
+		// 5.1 Age (https://httpwg.org/specs/rfc9111.html#rfc.section.5.1)
+		setAgeHeader(useCached, r.Header, now)
+	}()
+
 	if cachedReq == nil || cachedRes == nil {
 		res, err := do(req)
 		return false, res, err

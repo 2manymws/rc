@@ -26,19 +26,19 @@ func TestRC(t *testing.T) {
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/2")},
 		}, []*http.Response{
-			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
-			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
-			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
-			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Age": []string{"0"}, "Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Age": []string{"0"}, "Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Age": []string{"0"}, "Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Age": []string{"0"}, "Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
 		}, 2},
 		{"all cache 2", testutil.NewAllCache(t), []*http.Request{
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/2")},
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 		}, []*http.Response{
-			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
-			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
-			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Age": []string{"0"}, "Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Age": []string{"0"}, "Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Age": []string{"0"}, "Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":1}`)},
 		}, 1},
 		{"get only", testutil.NewGetOnlyCache(t), []*http.Request{
 			{Method: http.MethodPost, URL: testutil.MustParseURL("http://example.com/1")},
@@ -46,10 +46,10 @@ func TestRC(t *testing.T) {
 			{Method: http.MethodDelete, URL: testutil.MustParseURL("http://example.com/1")},
 			{Method: http.MethodGet, URL: testutil.MustParseURL("http://example.com/1")},
 		}, []*http.Response{
-			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
-			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
-			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":3}`)},
-			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":2}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Age": []string{"0"}, "Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Age": []string{"0"}, "Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Age": []string{"0"}, "Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":3}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Age": []string{"0"}, "Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":2}`)},
 		}, 1},
 	}
 	for _, tt := range tests {
