@@ -6,13 +6,13 @@ var defaultUnderstoodMethods = []string{
 	// Although not explicitly specified in RFC 9111, allow GET, HEAD, OPTIONS, and TRACE methods, which are specified as safe methods in RFC 9110 (see https://httpwg.org/specs/rfc9110.html#rfc.section.9.2.1).
 	http.MethodGet,
 	http.MethodHead,
+	http.MethodOptions,
+	http.MethodTrace,
 	// http.MethodPost,
 	// http.MethodPut,
 	// http.MethodPatch,
 	// http.MethodDelete,
 	// http.MethodConnect,
-	http.MethodOptions,
-	http.MethodTrace,
 }
 
 var defaultUnderstoodStatusCodes = []int{
@@ -106,4 +106,5 @@ var defaultHeuristicallyCacheableStatusCodes = []int{ //nostyle:varnames
 	http.StatusNotImplemented, // 501 / RFC 9110, 15.6.2
 }
 
-var defaultHeuristicExpirationRatio = 0.1
+// defaultHeuristicExpirationRatio is the default ratio of the heuristic expiration time ((Date - Last-Modified) * defaultHeuristicExpirationRatio)
+var defaultHeuristicExpirationRatio = 0.1 // 10%
