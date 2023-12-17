@@ -1,4 +1,4 @@
-# rc [![Go Reference](https://pkg.go.dev/badge/github.com/2manymws/rc.svg)](https://pkg.go.dev/github.com/2manymws/rc) [![build](https://github.com/2manymws/rc/actions/workflows/ci.yml/badge.svg)](https://github.com/2manymws/rc/actions/workflows/ci.yml) ![Coverage](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/rc/coverage.svg) ![Code to Test Ratio](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/rc/ratio.svg) ![Test Execution Time](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/rc/time.svg)
+# rc [![Go Reference](https://pkg.go.dev/badge/github.com/2manymws/rc.svg)](https://pkg.go.dev/github.com/2manymws/rc) [![build](https://github.com/2manymws/rc/actions/workflows/ci.yml/badge.svg)](https://github.com/2manymws/rc/actions/workflows/ci.yml) ![Coverage](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/2manymws/rc/coverage.svg) ![Code to Test Ratio](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/2manymws/rc/ratio.svg) ![Test Execution Time](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/2manymws/rc/time.svg)
 
 `rc` is a **r**esponse **c**ache middleware for cache.
 
