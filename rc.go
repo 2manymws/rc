@@ -2,7 +2,9 @@ package rc
 
 import (
 	"bytes"
+	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"time"
@@ -43,7 +45,10 @@ func newCacher(c Cacher) *cacher {
 		cc.Handle = v.Handle
 		cc.Storable = v.Storable
 	} else {
-		s, _ := rfc9111.NewShared() //nostyle:handlerrors
+		s, err := rfc9111.NewShared()
+		if err != nil {
+			panic(err) //nostyle:dontpanic
+		}
 		cc.Handle = s.Handle
 		cc.Storable = s.Storable
 	}
@@ -52,20 +57,43 @@ func newCacher(c Cacher) *cacher {
 
 type cacheMw struct {
 	cacher *cacher
+	logger *slog.Logger
 }
 
-func newCacheMw(c Cacher) *cacheMw {
+func newCacheMw(c Cacher, opts ...Option) *cacheMw {
 	cc := newCacher(c)
-	return &cacheMw{
+	m := &cacheMw{
 		cacher: cc,
 	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	if m.logger == nil {
+		m.logger = slog.New(slog.NewJSONHandler(io.Discard, nil))
+	}
+	return m
 }
 
-func (cw *cacheMw) Handler(next http.Handler) http.Handler {
+func (m *cacheMw) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		now := time.Now()
-		cachedReq, cachedRes, _ := cw.cacher.Load(req)                                                  //nostyle:handlerrors
-		cacheUsed, res, _ := cw.cacher.Handle(req, cachedReq, cachedRes, HandlerToRequester(next), now) //nostyle:handlerrors
+		cachedReq, cachedRes, err := m.cacher.Load(req) //nostyle:handlerrors
+		if err != nil {
+			switch {
+			case errors.Is(err, ErrCacheNotFound):
+				m.logger.Debug("cache not found", slog.String("method", req.Method), slog.String("url", req.URL.String()))
+			case errors.Is(err, ErrCacheExpired):
+				m.logger.Warn("cache expired", slog.String("method", req.Method), slog.String("url", req.URL.String()))
+			case errors.Is(err, ErrShouldNotUseCache):
+				m.logger.Debug("should not use cache", slog.String("method", req.Method), slog.String("url", req.URL.String()))
+			default:
+				m.logger.Error("failed to load cache", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
+			}
+		}
+		cacheUsed, res, err := m.cacher.Handle(req, cachedReq, cachedRes, HandlerToRequester(next), now) //nostyle:handlerrors
+		if err != nil {
+			m.logger.Error("failed to handle cache", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
+		}
 
 		// Response
 		for k, v := range res.Header {
@@ -81,30 +109,48 @@ func (cw *cacheMw) Handler(next http.Handler) http.Handler {
 		}
 		w.WriteHeader(res.StatusCode)
 		body, err := io.ReadAll(res.Body)
-		if err == nil {
-			_ = res.Body.Close() //nostyle:handlerrors
-			_, _ = w.Write(body) //nostyle:handlerrors
+		if err != nil {
+			m.logger.Error("failed to read response body", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
+		} else {
+			if _, err := w.Write(body); err != nil {
+				m.logger.Error("failed to write response body", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
+			}
 		}
-		_ = res.Body.Close() //nostyle:handlerrors
+		if err := res.Body.Close(); err != nil {
+			m.logger.Error("failed to close response body", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
+		}
 
 		if cacheUsed {
+			m.logger.Debug("cache used", slog.String("method", req.Method), slog.String("url", req.URL.String()))
 			return
 		}
-		ok, _ := cw.cacher.Storable(req, res, now)
+		ok, _ := m.cacher.Storable(req, res, now)
 		if !ok {
+			m.logger.Debug("cache not storable", slog.String("method", req.Method), slog.String("url", req.URL.String()))
 			return
 		}
 		// Restore response body
 		res.Body = io.NopCloser(bytes.NewReader(body))
 
 		// Store response as cache
-		_ = cw.cacher.Store(req, res) //nostyle:handlerrors
+		if err := m.cacher.Store(req, res); err != nil {
+			m.logger.Error("failed to store cache", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
+		}
+		m.logger.Debug("cache stored", slog.String("method", req.Method), slog.String("url", req.URL.String()))
 	})
 }
 
+type Option func(*cacheMw)
+
+func WithLogger(l *slog.Logger) Option {
+	return func(m *cacheMw) {
+		m.logger = l
+	}
+}
+
 // New returns a new response cache middleware.
-func New(cacher Cacher) func(next http.Handler) http.Handler {
-	rl := newCacheMw(cacher)
+func New(cacher Cacher, opts ...Option) func(next http.Handler) http.Handler {
+	rl := newCacheMw(cacher, opts...)
 	return rl.Handler
 }
 
