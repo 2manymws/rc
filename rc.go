@@ -142,6 +142,7 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 
 type Option func(*cacheMw)
 
+// WithLogger sets logger (slog.Logger).
 func WithLogger(l *slog.Logger) Option {
 	return func(m *cacheMw) {
 		m.logger = l
