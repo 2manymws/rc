@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.1](https://github.com/2manymws/rc/compare/v0.6.0...v0.6.1) - 2023-12-18
+### Other Changes
+- Add license for RFC 9111 by @k1LoW in https://github.com/2manymws/rc/pull/34
+
 ## [v0.6.0](https://github.com/2manymws/rc/compare/v0.5.2...v0.6.0) - 2023-12-18
 ### New Features 🎉
 - Support logger (log/slog.Logger) by @k1LoW in https://github.com/2manymws/rc/pull/33
