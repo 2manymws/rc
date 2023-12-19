@@ -19,7 +19,7 @@ type Cacher interface {
 	// If the cache is expired, it returns ErrCacheExpired.
 	Load(req *http.Request) (cachedReq *http.Request, cachedRes *http.Response, err error)
 	// Store stores the response cache.
-	Store(req *http.Request, res *http.Response) error
+	Store(req *http.Request, res *http.Response, expires time.Time) error
 }
 
 type Handler interface {
@@ -124,7 +124,7 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 			m.logger.Debug("cache used", slog.String("method", req.Method), slog.String("url", req.URL.String()))
 			return
 		}
-		ok, _ := m.cacher.Storable(req, res, now)
+		ok, expires := m.cacher.Storable(req, res, now)
 		if !ok {
 			m.logger.Debug("cache not storable", slog.String("method", req.Method), slog.String("url", req.URL.String()))
 			return
@@ -133,7 +133,7 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 		res.Body = io.NopCloser(bytes.NewReader(body))
 
 		// Store response as cache
-		if err := m.cacher.Store(req, res); err != nil {
+		if err := m.cacher.Store(req, res, expires); err != nil {
 			m.logger.Error("failed to store cache", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
 		}
 		m.logger.Debug("cache stored", slog.String("method", req.Method), slog.String("url", req.URL.String()))
