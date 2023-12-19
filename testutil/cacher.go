@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 var (
@@ -24,7 +25,7 @@ var errNoCache error = errors.New("no cache")
 
 type Cacher interface {
 	Load(req *http.Request) (cachedReq *http.Request, cachedRes *http.Response, err error)
-	Store(req *http.Request, res *http.Response) error
+	Store(req *http.Request, res *http.Response, expires time.Time) error
 	Hit() int
 }
 
@@ -71,7 +72,7 @@ func (c *AllCache) Load(req *http.Request) (*http.Request, *http.Response, error
 	return cachedReq, cachedRes, nil
 }
 
-func (c *AllCache) Store(req *http.Request, res *http.Response) error {
+func (c *AllCache) Store(req *http.Request, res *http.Response, expires time.Time) error {
 	c.t.Helper()
 	key := reqToKey(req)
 	cc, err := encodeReqRes(req, res)
@@ -118,7 +119,7 @@ func (c *GetOnlyCache) Load(req *http.Request) (*http.Request, *http.Response, e
 	return cachedReq, cachedRes, nil
 }
 
-func (c *GetOnlyCache) Store(req *http.Request, res *http.Response) error {
+func (c *GetOnlyCache) Store(req *http.Request, res *http.Response, expires time.Time) error {
 	c.t.Helper()
 	if req.Method != http.MethodGet {
 		return errNoCache
