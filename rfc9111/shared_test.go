@@ -9,6 +9,25 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+type testRule struct {
+	cacheableMethods []string
+	cacheableStatus  []int
+	age              time.Duration
+}
+
+func (r *testRule) Cacheable(req *http.Request, res *http.Response) (bool, time.Duration) {
+	for _, m := range r.cacheableMethods {
+		if req.Method == m {
+			for _, s := range r.cacheableStatus {
+				if res.StatusCode == s {
+					return true, r.age
+				}
+			}
+		}
+	}
+	return false, 0
+}
+
 func TestShared_Storable(t *testing.T) {
 	now := time.Date(2024, 12, 13, 14, 15, 16, 00, time.UTC)
 
@@ -16,6 +35,7 @@ func TestShared_Storable(t *testing.T) {
 		name        string
 		req         *http.Request
 		res         *http.Response
+		rules       []ExtendedRule
 		wantOK      bool
 		wantExpires time.Time
 	}{
@@ -30,6 +50,7 @@ func TestShared_Storable(t *testing.T) {
 					"Cache-Control": []string{"s-maxage=10"},
 				},
 			},
+			nil,
 			true,
 			time.Date(2024, 12, 13, 14, 15, 26, 00, time.UTC),
 		},
@@ -44,6 +65,7 @@ func TestShared_Storable(t *testing.T) {
 					"Cache-Control": []string{"max-age=15"},
 				},
 			},
+			nil,
 			true,
 			time.Date(2024, 12, 13, 14, 15, 31, 00, time.UTC),
 		},
@@ -58,6 +80,7 @@ func TestShared_Storable(t *testing.T) {
 					"Expires": []string{"Mon, 13 Dec 2024 14:15:20 GMT"},
 				},
 			},
+			nil,
 			true,
 			time.Date(2024, 12, 13, 14, 15, 20, 00, time.UTC),
 		},
@@ -73,6 +96,7 @@ func TestShared_Storable(t *testing.T) {
 					"Date":    []string{"Mon, 13 Dec 2024 13:15:20 GMT"},
 				},
 			},
+			nil,
 			true,
 			time.Date(2024, 12, 13, 15, 15, 16, 00, time.UTC),
 		},
@@ -88,6 +112,7 @@ func TestShared_Storable(t *testing.T) {
 					"Date":          []string{"Mon, 13 Dec 2024 14:15:20 GMT"},
 				},
 			},
+			nil,
 			true,
 			time.Date(2024, 12, 13, 14, 15, 21, 00, time.UTC),
 		},
@@ -102,6 +127,7 @@ func TestShared_Storable(t *testing.T) {
 					"Last-Modified": []string{"Mon, 13 Dec 2024 14:15:06 GMT"},
 				},
 			},
+			nil,
 			true,
 			time.Date(2024, 12, 13, 14, 15, 17, 00, time.UTC),
 		},
@@ -116,6 +142,7 @@ func TestShared_Storable(t *testing.T) {
 					"Last-Modified": []string{"Mon, 13 Dec 2024 14:15:06 GMT"},
 				},
 			},
+			nil,
 			false,
 			time.Time{},
 		},
@@ -130,6 +157,7 @@ func TestShared_Storable(t *testing.T) {
 					"Date": []string{"Mon, 13 Dec 2024 14:15:10 GMT"},
 				},
 			},
+			nil,
 			false,
 			time.Time{},
 		},
@@ -144,6 +172,7 @@ func TestShared_Storable(t *testing.T) {
 					"Cache-Control": []string{"max-age=15"},
 				},
 			},
+			nil,
 			false,
 			time.Time{},
 		},
@@ -158,6 +187,7 @@ func TestShared_Storable(t *testing.T) {
 					"Cache-Control": []string{"max-age=15"},
 				},
 			},
+			nil,
 			false,
 			time.Time{},
 		},
@@ -172,6 +202,7 @@ func TestShared_Storable(t *testing.T) {
 					"Cache-Control": []string{"max-age=15"},
 				},
 			},
+			nil,
 			false,
 			time.Time{},
 		},
@@ -186,6 +217,7 @@ func TestShared_Storable(t *testing.T) {
 					"Cache-Control": []string{"no-store"},
 				},
 			},
+			nil,
 			false,
 			time.Time{},
 		},
@@ -200,6 +232,7 @@ func TestShared_Storable(t *testing.T) {
 					"Cache-Control": []string{"private"},
 				},
 			},
+			nil,
 			false,
 			time.Time{},
 		},
@@ -215,6 +248,7 @@ func TestShared_Storable(t *testing.T) {
 					"Cache-Control": []string{"public"},
 				},
 			},
+			nil,
 			true,
 			time.Date(2024, 12, 13, 14, 15, 17, 00, time.UTC),
 		},
@@ -230,6 +264,7 @@ func TestShared_Storable(t *testing.T) {
 					"Cache-Control": []string{"public"},
 				},
 			},
+			nil,
 			false,
 			time.Time{},
 		},
@@ -244,6 +279,7 @@ func TestShared_Storable(t *testing.T) {
 					"Cache-Control": []string{"public"},
 				},
 			},
+			nil,
 			false,
 			time.Time{},
 		},
@@ -261,15 +297,59 @@ func TestShared_Storable(t *testing.T) {
 					"Cache-Control": []string{"max-age=15"},
 				},
 			},
+			nil,
 			false,
 			time.Time{},
+		},
+		{
+			"ExtendedRule(+15s) GET 200 -> +15s",
+			&http.Request{
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Date": []string{"Mon, 13 Dec 2024 14:15:10 GMT"},
+				},
+			},
+			[]ExtendedRule{
+				&testRule{
+					cacheableMethods: []string{http.MethodGet},
+					cacheableStatus:  []int{http.StatusOK},
+					age:              15 * time.Second,
+				},
+			},
+			true,
+			time.Date(2024, 12, 13, 14, 15, 25, 00, time.UTC),
+		},
+		{
+			"ExtendedRule(+15s) POST 201 Cache-Control: public, Last-Modified 2024-12-13 14:15:06 -> +15s",
+			&http.Request{
+				Method: http.MethodPost,
+			},
+			&http.Response{
+				StatusCode: http.StatusCreated,
+				Header: http.Header{
+					"Last-Modified": []string{"Mon, 13 Dec 2024 14:15:06 GMT"},
+					"Cache-Control": []string{"public"},
+				},
+			},
+			[]ExtendedRule{
+				&testRule{
+					cacheableMethods: []string{http.MethodPost},
+					cacheableStatus:  []int{http.StatusCreated},
+					age:              15 * time.Second,
+				},
+			},
+			true,
+			time.Date(2024, 12, 13, 14, 15, 31, 00, time.UTC),
 		},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			s, err := NewShared()
+			s, err := NewShared(ExtendedRules(tt.rules))
 			if err != nil {
 				t.Errorf("Shared.Storable() error = %v", err)
 				return
