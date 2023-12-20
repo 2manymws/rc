@@ -323,16 +323,13 @@ func TestShared_Storable(t *testing.T) {
 			time.Date(2024, 12, 13, 14, 15, 25, 00, time.UTC),
 		},
 		{
-			"ExtendedRule(+15s) POST 201 Cache-Control: public, Last-Modified 2024-12-13 14:15:06 -> +15s",
+			"ExtendedRule(+15s) POST 201 -> +15s",
 			&http.Request{
 				Method: http.MethodPost,
 			},
 			&http.Response{
 				StatusCode: http.StatusCreated,
-				Header: http.Header{
-					"Last-Modified": []string{"Mon, 13 Dec 2024 14:15:06 GMT"},
-					"Cache-Control": []string{"public"},
-				},
+				Header:     http.Header{},
 			},
 			[]ExtendedRule{
 				&testRule{

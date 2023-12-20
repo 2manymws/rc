@@ -20,6 +20,7 @@ type Shared struct {
 
 // ExtendedRule is an extended rule.
 // Like proxy_cache_valid of NGINX.
+// Additional rules are applied only when there is no Cache-Control header and the expiration time cannot be calculated.
 // THIS IS NOT RFC 9111.
 type ExtendedRule interface {
 	// Cacheable returns true and and the expiration time if the response is cacheable.
@@ -104,8 +105,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 	// 3. Storing Responses in Caches (https://httpwg.org/specs/rfc9111.html#rfc.section.3)
 	// - the request method is understood by the cache;
 	if !contains(req.Method, s.understoodMethods) {
-		rescc := ParseResponseCacheControlHeader(res.Header.Values("Cache-Control"))
-		if !rescc.NoStore && !rescc.Private {
+		if res.Header.Get("Cache-Control") == "" {
 			return s.storableWithExtendedRules(req, res, now)
 		}
 		return false, time.Time{}
@@ -118,8 +118,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 		http.StatusProcessing,
 		http.StatusEarlyHints,
 	}) {
-		rescc := ParseResponseCacheControlHeader(res.Header.Values("Cache-Control"))
-		if !rescc.NoStore && !rescc.Private {
+		if res.Header.Get("Cache-Control") == "" {
 			return s.storableWithExtendedRules(req, res, now)
 		}
 		return false, time.Time{}
@@ -132,7 +131,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 		http.StatusPartialContent,
 		http.StatusNotModified,
 	}) || (rescc.MustUnderstand && !contains(res.StatusCode, s.understoodStatusCodes)) {
-		if !rescc.NoStore && !rescc.Private {
+		if res.Header.Get("Cache-Control") == "" {
 			return s.storableWithExtendedRules(req, res, now)
 		}
 		return false, time.Time{}
@@ -156,7 +155,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 
 	expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
 	if expires.Sub(now) <= 0 {
-		if expires.Sub(time.Time{}) == 0 {
+		if expires.Sub(time.Time{}) == 0 && res.Header.Get("Cache-Control") == "" {
 			return s.storableWithExtendedRules(req, res, now)
 		}
 		return false, time.Time{}
@@ -188,11 +187,6 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 
 	//   * a status code that is defined as heuristically cacheable (see https://httpwg.org/specs/rfc9111.html#rfc.section.4.2.2).
 	if contains(res.StatusCode, s.heuristicallyCacheableStatusCodes) {
-		return true, expires
-	}
-
-	ok, _ := s.storableWithExtendedRules(req, res, now)
-	if ok {
 		return true, expires
 	}
 
