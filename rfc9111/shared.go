@@ -22,7 +22,7 @@ type Shared struct {
 // Like proxy_cache_valid of NGINX.
 // Rules are applied only when there is no Cache-Control header and the expiration time cannot be calculated.
 // THIS IS NOT RFC 9111.
-type ExtendedRule interface {
+type ExtendedRule interface { //nostyle:ifacenames
 	// Cacheable returns true and and the expiration time if the response is cacheable.
 	Cacheable(req *http.Request, res *http.Response) (ok bool, age time.Duration)
 }
