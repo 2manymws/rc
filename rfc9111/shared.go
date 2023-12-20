@@ -20,7 +20,7 @@ type Shared struct {
 
 // ExtendedRule is an extended rule.
 // Like proxy_cache_valid of NGINX.
-// Additional rules are applied only when there is no Cache-Control header and the expiration time cannot be calculated.
+// Rules are applied only when there is no Cache-Control header and the expiration time cannot be calculated.
 // THIS IS NOT RFC 9111.
 type ExtendedRule interface {
 	// Cacheable returns true and and the expiration time if the response is cacheable.
@@ -306,6 +306,7 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 	return false, res, err
 }
 
+// storableWithExtendedRules returns true if the response is storable with extended rules.
 func (s *Shared) storableWithExtendedRules(req *http.Request, res *http.Response, now time.Time) (bool, time.Time) {
 	for _, rule := range s.extendedRules {
 		ok, age := rule.Cacheable(req, res)
