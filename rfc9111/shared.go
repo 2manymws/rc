@@ -105,10 +105,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 	// 3. Storing Responses in Caches (https://httpwg.org/specs/rfc9111.html#rfc.section.3)
 	// - the request method is understood by the cache;
 	if !contains(req.Method, s.understoodMethods) {
-		if res.Header.Get("Cache-Control") == "" {
-			return s.storableWithExtendedRules(req, res, now)
-		}
-		return false, time.Time{}
+		return s.storableWithExtendedRules(req, res, now)
 	}
 
 	// - the response status code is final (see https://httpwg.org/specs/rfc9110.html#rfc.section.15);
@@ -118,10 +115,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 		http.StatusProcessing,
 		http.StatusEarlyHints,
 	}) {
-		if res.Header.Get("Cache-Control") == "" {
-			return s.storableWithExtendedRules(req, res, now)
-		}
-		return false, time.Time{}
+		return s.storableWithExtendedRules(req, res, now)
 	}
 
 	rescc := ParseResponseCacheControlHeader(res.Header.Values("Cache-Control"))
@@ -131,10 +125,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 		http.StatusPartialContent,
 		http.StatusNotModified,
 	}) || (rescc.MustUnderstand && !contains(res.StatusCode, s.understoodStatusCodes)) {
-		if res.Header.Get("Cache-Control") == "" {
-			return s.storableWithExtendedRules(req, res, now)
-		}
-		return false, time.Time{}
+		return s.storableWithExtendedRules(req, res, now)
 	}
 
 	// - the no-store cache directive is not present in the response (see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.5);
@@ -155,7 +146,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 
 	expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
 	if expires.Sub(now) <= 0 {
-		if expires.Sub(time.Time{}) == 0 && res.Header.Get("Cache-Control") == "" {
+		if expires.Sub(time.Time{}) == 0 {
 			return s.storableWithExtendedRules(req, res, now)
 		}
 		return false, time.Time{}
@@ -308,6 +299,10 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 
 // storableWithExtendedRules returns true if the response is storable with extended rules.
 func (s *Shared) storableWithExtendedRules(req *http.Request, res *http.Response, now time.Time) (bool, time.Time) {
+	if res.Header.Get("Cache-Control") != "" {
+		return false, time.Time{}
+	}
+
 	for _, rule := range s.extendedRules {
 		ok, age := rule.Cacheable(req, res)
 		if ok {
