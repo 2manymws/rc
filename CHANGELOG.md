@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.7.0](https://github.com/2manymws/rc/compare/v0.6.1...v0.7.0) - 2023-12-20
+### Breaking Changes 🛠
+- Fix Cacher.Store signature by @k1LoW in https://github.com/2manymws/rc/pull/36
+- Support extended rules like proxy_cache_valid of NGINX by @k1LoW in https://github.com/2manymws/rc/pull/38
+- Does not store responses with Set-Cookie headers by default, similar to NGINX by @k1LoW in https://github.com/2manymws/rc/pull/39
+
 ## [v0.6.1](https://github.com/2manymws/rc/compare/v0.6.0...v0.6.1) - 2023-12-18
 ### Other Changes
 - Add license for RFC 9111 by @k1LoW in https://github.com/2manymws/rc/pull/34
