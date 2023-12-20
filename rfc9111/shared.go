@@ -15,6 +15,7 @@ type Shared struct {
 	understoodStatusCodes             []int
 	heuristicallyCacheableStatusCodes []int
 	heuristicExpirationRatio          float64
+	storeRequestWithSetCookieHeader   bool
 	extendedRules                     []ExtendedRule
 }
 
@@ -61,6 +62,14 @@ func HeuristicExpirationRatio(ratio float64) SharedOption {
 			return ErrNegativeRatio
 		}
 		s.heuristicExpirationRatio = ratio
+		return nil
+	}
+}
+
+// StoreRequestWithSetCookieHeader enables storing request with Set-Cookie header.
+func StoreRequestWithSetCookieHeader() SharedOption {
+	return func(s *Shared) error {
+		s.storeRequestWithSetCookieHeader = true
 		return nil
 	}
 }
@@ -141,6 +150,13 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 	// - if the cache is shared: the Authorization header field is not present in the request (see https://httpwg.org/specs/rfc9111.html#rfc.section.11.6.2 of [HTTP]) or a response directive is present that explicitly allows shared caching (see https://httpwg.org/specs/rfc9111.html#rfc.section.3.5);
 	// In this specification, the following response directives have such an effect: must-revalidate (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.2), public (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.9), and s-maxage (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.10).
 	if req.Header.Get("Authorization") != "" && !rescc.MustRevalidate && !rescc.Public && rescc.SMaxAge == nil {
+		return false, time.Time{}
+	}
+
+	// In RFC 9111, Servers that wish to control caching of responses with Set-Cookie headers are encouraged to emit appropriate Cache-Control response header fields (see https://httpwg.org/specs/rfc9111.html#rfc.section.7.3).
+	// But to beat on the safe side, this package does not store responses with Set-Cookie headers by default, similar to NGINX.
+	// THIS IS NOT RFC 9111.
+	if req.Header.Get("Set-Cookie") != "" && !s.storeRequestWithSetCookieHeader {
 		return false, time.Time{}
 	}
 

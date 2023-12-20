@@ -302,6 +302,24 @@ func TestShared_Storable(t *testing.T) {
 			time.Time{},
 		},
 		{
+			"GET Set-Cookie: k=v 200 Cache-Control: max-age=15 -> No Store",
+			&http.Request{
+				Method: http.MethodGet,
+				Header: http.Header{
+					"Set-Cookie": []string{"k=v"},
+				},
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Cache-Control": []string{"max-age=15"},
+				},
+			},
+			nil,
+			false,
+			time.Time{},
+		},
+		{
 			"ExtendedRule(+15s) GET 200 -> +15s",
 			&http.Request{
 				Method: http.MethodGet,
