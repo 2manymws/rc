@@ -15,6 +15,16 @@ type Shared struct {
 	understoodStatusCodes             []int
 	heuristicallyCacheableStatusCodes []int
 	heuristicExpirationRatio          float64
+	extendedRules                     []ExtendedRule
+}
+
+// ExtendedRule is an extended rule.
+// Like proxy_cache_valid of NGINX.
+// Rules are applied only when there is no Cache-Control header and the expiration time cannot be calculated.
+// THIS IS NOT RFC 9111.
+type ExtendedRule interface { //nostyle:ifacenames
+	// Cacheable returns true and and the expiration time if the response is cacheable.
+	Cacheable(req *http.Request, res *http.Response) (ok bool, age time.Duration)
 }
 
 // SharedOption is an option for Shared.
@@ -55,6 +65,14 @@ func HeuristicExpirationRatio(ratio float64) SharedOption {
 	}
 }
 
+// ExtendedRules sets the extended rules.
+func ExtendedRules(rules []ExtendedRule) SharedOption {
+	return func(s *Shared) error {
+		s.extendedRules = rules
+		return nil
+	}
+}
+
 // NewShared returns a new Shared cache handler.
 func NewShared(opts ...SharedOption) (*Shared, error) {
 	s := &Shared{
@@ -87,7 +105,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 	// 3. Storing Responses in Caches (https://httpwg.org/specs/rfc9111.html#rfc.section.3)
 	// - the request method is understood by the cache;
 	if !contains(req.Method, s.understoodMethods) {
-		return false, time.Time{}
+		return s.storableWithExtendedRules(req, res, now)
 	}
 
 	// - the response status code is final (see https://httpwg.org/specs/rfc9110.html#rfc.section.15);
@@ -97,7 +115,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 		http.StatusProcessing,
 		http.StatusEarlyHints,
 	}) {
-		return false, time.Time{}
+		return s.storableWithExtendedRules(req, res, now)
 	}
 
 	rescc := ParseResponseCacheControlHeader(res.Header.Values("Cache-Control"))
@@ -107,7 +125,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 		http.StatusPartialContent,
 		http.StatusNotModified,
 	}) || (rescc.MustUnderstand && !contains(res.StatusCode, s.understoodStatusCodes)) {
-		return false, time.Time{}
+		return s.storableWithExtendedRules(req, res, now)
 	}
 
 	// - the no-store cache directive is not present in the response (see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.5);
@@ -128,6 +146,9 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 
 	expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
 	if expires.Sub(now) <= 0 {
+		if expires.Sub(time.Time{}) == 0 {
+			return s.storableWithExtendedRules(req, res, now)
+		}
 		return false, time.Time{}
 	}
 
@@ -276,6 +297,34 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 	return false, res, err
 }
 
+// storableWithExtendedRules returns true if the response is storable with extended rules.
+func (s *Shared) storableWithExtendedRules(req *http.Request, res *http.Response, now time.Time) (bool, time.Time) {
+	if res.Header.Get("Cache-Control") != "" {
+		return false, time.Time{}
+	}
+
+	for _, rule := range s.extendedRules {
+		ok, age := rule.Cacheable(req, res)
+		if ok {
+			// Add Expires header field
+			var expires time.Time
+			if res.Header.Get("Date") != "" {
+				date, err := http.ParseTime(res.Header.Get("Date"))
+				if err == nil {
+					expires = date.Add(age)
+				} else {
+					expires = now.Add(age)
+				}
+			} else {
+				expires = now.Add(age)
+			}
+			res.Header.Set("Expires", expires.UTC().Format(http.TimeFormat))
+			return true, expires
+		}
+	}
+	return false, time.Time{}
+}
+
 func CalclateExpires(d *ResponseDirectives, header http.Header, heuristicExpirationRatio float64, now time.Time) time.Time {
 	// 	4.2.1. Calculating Freshness Lifetime
 	// A cache can calculate the freshness lifetime (denoted as freshness_lifetime) of a response by evaluating the following rules and using the first match:
@@ -319,7 +368,8 @@ func CalclateExpires(d *ResponseDirectives, header http.Header, heuristicExpirat
 		}
 	}
 
-	return now
+	// Can't calculate expires
+	return time.Time{}
 }
 
 func contains[T comparable](v T, vv []T) bool {
