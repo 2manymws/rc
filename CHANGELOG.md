@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.7.1](https://github.com/2manymws/rc/compare/v0.7.0...v0.7.1) - 2023-12-21
+### Other Changes
+- Add CacherHandler by @k1LoW in https://github.com/2manymws/rc/pull/40
+
 ## [v0.7.0](https://github.com/2manymws/rc/compare/v0.6.1...v0.7.0) - 2023-12-20
 ### Breaking Changes 🛠
 - Fix Cacher.Store signature by @k1LoW in https://github.com/2manymws/rc/pull/36
