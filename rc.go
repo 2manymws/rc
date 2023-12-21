@@ -29,6 +29,11 @@ type Handler interface {
 	Storable(req *http.Request, res *http.Response, now time.Time) (ok bool, expires time.Time)
 }
 
+type CacherHandler interface {
+	Cacher
+	Handler
+}
+
 var _ Handler = (*rfc9111.Shared)(nil)
 
 type cacher struct {
