@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.7.2](https://github.com/2manymws/rc/compare/v0.7.1...v0.7.2) - 2023-12-22
+### Other Changes
+- Revert "Add CacherHandler" by @k1LoW in https://github.com/2manymws/rc/pull/42
+
 ## [v0.7.1](https://github.com/2manymws/rc/compare/v0.7.0...v0.7.1) - 2023-12-21
 ### Other Changes
 - Add CacherHandler by @k1LoW in https://github.com/2manymws/rc/pull/40
