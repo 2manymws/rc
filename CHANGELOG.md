@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.0](https://github.com/2manymws/rc/compare/v0.7.3...v0.8.0) - 2024-01-04
+### Breaking Changes 🛠
+- Use req.Host only ( does not use req.URL.Host ) by @k1LoW in https://github.com/2manymws/rc/pull/46
+
 ## [v0.7.3](https://github.com/2manymws/rc/compare/v0.7.2...v0.7.3) - 2024-01-04
 ### Fix bug 🐛
 - Use the Date header field value first. by @k1LoW in https://github.com/2manymws/rc/pull/44
