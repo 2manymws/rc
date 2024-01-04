@@ -215,7 +215,7 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 	// When presented with a request, a cache MUST NOT reuse a stored response unless:
 
 	// - the presented target URI (https://httpwg.org/specs/rfc9110.html#rfc.section.7.1 of [HTTP]) and that of the stored response match, and
-	if req.Host != cachedReq.Host || req.URL.String() != cachedReq.URL.String() {
+	if req.Host != cachedReq.Host || req.URL.Path != cachedReq.URL.Path || req.URL.RawQuery != cachedReq.URL.RawQuery {
 		// For SNI compatibility, also compare req.Host
 		res, err := do(req)
 		return false, res, err
