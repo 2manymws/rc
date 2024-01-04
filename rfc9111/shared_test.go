@@ -42,6 +42,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 200 Cache-Control: s-maxage=10 -> +10s",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -57,6 +58,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 200 Cache-Control: max-age=15 -> +15s",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -72,6 +74,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 200 Expires: 2024-12-13 14:15:20",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -87,6 +90,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 200 Expires: 2024-12-13 14:15:20, Date: 2024-12-13 13:15:20",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -103,6 +107,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 200 Last-Modified: 2024-12-13 14:15:10, Date: 2024-12-13 14:15:20 -> +1s",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -119,6 +124,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 200 Last-Modified: 2024-12-13 14:15:06 -> +1s",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -134,6 +140,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 500 Last-Modified: 2024-12-13 14:15:06 -> No Store",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -149,6 +156,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 200 -> No Store",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -164,6 +172,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"UNUNDERSTOODMETHOD 200 -> No Store",
 			&http.Request{
+				Host:   "example.com",
 				Method: "UNUNDERSTOODMETHOD",
 			},
 			&http.Response{
@@ -179,6 +188,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 100 -> No Store",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -194,6 +204,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 206 -> No Store",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -209,6 +220,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 200 Cache-Control: no-store -> No Store",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -224,6 +236,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 200 Cache-Control: private -> No Store",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -239,6 +252,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 200 Cache-Control: public, Last-Modified 2024-12-13 14:15:06 -> +1s",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -255,6 +269,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"POST 201 Cache-Control: public, Last-Modified 2024-12-13 14:15:06 -> No Store",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodPost,
 			},
 			&http.Response{
@@ -271,6 +286,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET 200 Cache-Control: public (only) -> No Store",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -286,6 +302,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET Authorization: XXX 200 Cache-Control: max-age=15 -> No Store",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 				Header: http.Header{
 					"Authorization": []string{"XXX"},
@@ -304,6 +321,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"GET Set-Cookie: k=v 200 Cache-Control: max-age=15 -> No Store",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 				Header: http.Header{
 					"Set-Cookie": []string{"k=v"},
@@ -322,6 +340,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"ExtendedRule(+15s) GET 200 -> +15s",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodGet,
 			},
 			&http.Response{
@@ -343,6 +362,7 @@ func TestShared_Storable(t *testing.T) {
 		{
 			"ExtendedRule(+15s) POST 201 -> +15s",
 			&http.Request{
+				Host:   "example.com",
 				Method: http.MethodPost,
 			},
 			&http.Response{
@@ -425,6 +445,7 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"No cached request/response (nil)",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 			},
@@ -437,10 +458,12 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Use origin response (defferent URL)",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 			},
 			&http.Request{
+				Host:   other.Host,
 				URL:    other,
 				Method: http.MethodGet,
 			},
@@ -457,10 +480,12 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Use origin response (defferent method)",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodHead,
 			},
@@ -477,10 +502,12 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Use origin response (Vary: *)",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 			},
@@ -499,10 +526,12 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Use flesh cached response",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 			},
@@ -529,10 +558,12 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Use stale cached response",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 			},
@@ -559,6 +590,7 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Use origin response (Cache-Control: max-stale=10)",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{
@@ -566,6 +598,7 @@ func TestShared_Handle(t *testing.T) {
 				},
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 			},
@@ -583,6 +616,7 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Use stale cached response (Cache-Control: max-stale=40)",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{
@@ -590,6 +624,7 @@ func TestShared_Handle(t *testing.T) {
 				},
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 			},
@@ -614,6 +649,7 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Use flesh cached response (Vary: Content-Type, User-Agent)",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{
@@ -622,6 +658,7 @@ func TestShared_Handle(t *testing.T) {
 				},
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{
@@ -654,6 +691,7 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Use origin response (Vary: Content-Type, User-Agent)",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{
@@ -662,6 +700,7 @@ func TestShared_Handle(t *testing.T) {
 				},
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{
@@ -684,11 +723,13 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Use origin response (Cache-Control: no-cache, max-age=60)",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{},
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{},
@@ -707,11 +748,13 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Use origin response (POST Cache-Control: no-cache)",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodPost,
 				Header: http.Header{},
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodPost,
 				Header: http.Header{},
@@ -730,11 +773,13 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Use cache response (Cache-Control: no-cache, max-age=60)",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{},
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{},
@@ -759,11 +804,13 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Validate and use origin response",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{},
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{},
@@ -783,11 +830,13 @@ func TestShared_Handle(t *testing.T) {
 		{
 			"Validate and use cached response",
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{},
 			},
 			&http.Request{
+				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
 				Header: http.Header{},
