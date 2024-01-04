@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.7.3](https://github.com/2manymws/rc/compare/v0.7.2...v0.7.3) - 2024-01-04
+### Fix bug 🐛
+- Use the Date header field value first. by @k1LoW in https://github.com/2manymws/rc/pull/44
+
 ## [v0.7.2](https://github.com/2manymws/rc/compare/v0.7.1...v0.7.2) - 2023-12-22
 ### Other Changes
 - Revert "Add CacherHandler" by @k1LoW in https://github.com/2manymws/rc/pull/42
