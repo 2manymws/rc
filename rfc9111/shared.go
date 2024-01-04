@@ -323,17 +323,8 @@ func (s *Shared) storableWithExtendedRules(req *http.Request, res *http.Response
 		ok, age := rule.Cacheable(req, res)
 		if ok {
 			// Add Expires header field
-			var expires time.Time
-			if res.Header.Get("Date") != "" {
-				date, err := http.ParseTime(res.Header.Get("Date"))
-				if err == nil {
-					expires = date.Add(age)
-				} else {
-					expires = now.Add(age)
-				}
-			} else {
-				expires = now.Add(age)
-			}
+			od := originDate(res.Header, now)
+			expires := od.Add(age)
 			res.Header.Set("Expires", expires.UTC().Format(http.TimeFormat))
 			return true, expires
 		}
@@ -341,51 +332,54 @@ func (s *Shared) storableWithExtendedRules(req *http.Request, res *http.Response
 	return false, time.Time{}
 }
 
-func CalclateExpires(d *ResponseDirectives, header http.Header, heuristicExpirationRatio float64, now time.Time) time.Time {
+func CalclateExpires(d *ResponseDirectives, resHeader http.Header, heuristicExpirationRatio float64, now time.Time) time.Time {
 	// 	4.2.1. Calculating Freshness Lifetime
 	// A cache can calculate the freshness lifetime (denoted as freshness_lifetime) of a response by evaluating the following rules and using the first match:
 
-	// - If the cache is shared and the s-maxage response directive (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.10) is present, use its value, or
+	// - If the cache is shared and the s-maxage response directive (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.10) is present, use its value
 	if d.SMaxAge != nil {
-		return now.Add(time.Duration(*d.SMaxAge) * time.Second)
+		od := originDate(resHeader, now)
+		return od.Add(time.Duration(*d.SMaxAge) * time.Second)
 	}
-	// - If the max-age response directive (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.1) is present, use its value, or
+	// - If the max-age response directive (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.1) is present, use its value
 	if d.MaxAge != nil {
-		return now.Add(time.Duration(*d.MaxAge) * time.Second)
+		od := originDate(resHeader, now)
+		return od.Add(time.Duration(*d.MaxAge) * time.Second)
 	}
-	if header.Get("Expires") != "" {
-		// - If the Expires response header field (https://httpwg.org/specs/rfc9111.html#rfc.section.5.3) is present, use its value minus the value of the Date response header field
-		et, err := http.ParseTime(header.Get("Expires"))
+	if resHeader.Get("Expires") != "" {
+		// - If the Expires response header field (https://httpwg.org/specs/rfc9111.html#rfc.section.5.3) is present, use its value minus the value of the Date response header field (using the time the message was received if it is not present, as per Section 6.6.1 of [HTTP])
+		et, err := http.ParseTime(resHeader.Get("Expires"))
 		if err == nil {
-			if header.Get("Date") != "" {
-				dt, err := http.ParseTime(header.Get("Date"))
-				if err == nil {
-					return now.Add(et.Sub(dt))
-				}
-			} else {
-				// (using the time the message was received if it is not present, as per https://httpwg.org/specs/rfc9110.html#rfc.section.6.6.1 of [HTTP])
-				return et // == return now.Add(et.Sub(now))
-			}
+			od := originDate(resHeader, now)
+			return now.Add(et.Sub(od))
 		}
 	}
 	// Otherwise, no explicit expiration time is present in the response. A heuristic freshness lifetime might be applicable; see https://httpwg.org/specs/rfc9111.html#rfc.section.4.2.2.
-	if header.Get("Last-Modified") != "" {
-		lt, err := http.ParseTime(header.Get("Last-Modified"))
+	if resHeader.Get("Last-Modified") != "" {
+		lt, err := http.ParseTime(resHeader.Get("Last-Modified"))
 		if err == nil {
 			// If the response has a Last-Modified header field (https://httpwg.org/specs/rfc9110.html#rfc.section.8.8.2 of [HTTP]), caches are encouraged to use a heuristic expiration value that is no more than some fraction of the interval since that time. A typical setting of this fraction might be 10%.
-			if header.Get("Date") != "" {
-				dt, err := http.ParseTime(header.Get("Date"))
-				if err == nil {
-					return dt.Add(time.Duration(float64(dt.Sub(lt)) * heuristicExpirationRatio))
-				}
-			} else {
-				return now.Add(time.Duration(float64(now.Sub(lt)) * heuristicExpirationRatio))
-			}
+			od := originDate(resHeader, now)
+			return od.Add(time.Duration(float64(od.Sub(lt)) * heuristicExpirationRatio))
 		}
 	}
 
 	// Can't calculate expires
 	return time.Time{}
+}
+
+func originDate(resHeader http.Header, now time.Time) time.Time {
+	if resHeader.Get("Date") != "" {
+		t, err := http.ParseTime(resHeader.Get("Date"))
+		if err == nil {
+			return t
+		}
+	}
+	// A recipient with a clock that receives a response with an invalid Date header field value MAY replace that value with the time that response was received. (https://httpwg.org/specs/rfc9110.html#rfc.section.6.6.1 of [HTTP])
+	//
+	// ...using the time the message was received if it is not present, as per https://httpwg.org/specs/rfc9110.html#rfc.section.6.6.1 of [HTTP]
+	// (https://httpwg.org/specs/rfc9111.html#rfc.section.4.2.1)
+	return now
 }
 
 func contains[T comparable](v T, vv []T) bool {
