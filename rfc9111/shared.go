@@ -156,7 +156,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 	// In RFC 9111, Servers that wish to control caching of responses with Set-Cookie headers are encouraged to emit appropriate Cache-Control response header fields (see https://httpwg.org/specs/rfc9111.html#rfc.section.7.3).
 	// But to beat on the safe side, this package does not store responses with Set-Cookie headers by default, similar to NGINX.
 	// THIS IS NOT RFC 9111.
-	if req.Header.Get("Set-Cookie") != "" && !s.storeRequestWithSetCookieHeader {
+	if res.Header.Get("Set-Cookie") != "" && !s.storeRequestWithSetCookieHeader {
 		return false, time.Time{}
 	}
 
