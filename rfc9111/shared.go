@@ -324,7 +324,7 @@ func (s *Shared) storableWithExtendedRules(req *http.Request, res *http.Response
 		if ok {
 			// Add Expires header field
 			od := originDate(res.Header, now)
-			expires := od.Add(age)
+			expires := od.Add(age) //nostyle:varnames
 			res.Header.Set("Expires", expires.UTC().Format(http.TimeFormat))
 			return true, expires
 		}
