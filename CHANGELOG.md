@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.1](https://github.com/2manymws/rc/compare/v0.8.0...v0.8.1) - 2024-01-11
+### Fix bug 🐛
+- Fix Set-Cookie handling by @k1LoW in https://github.com/2manymws/rc/pull/48
+
 ## [v0.8.0](https://github.com/2manymws/rc/compare/v0.7.3...v0.8.0) - 2024-01-04
 ### Breaking Changes 🛠
 - Use req.Host only ( does not use req.URL.Host ) by @k1LoW in https://github.com/2manymws/rc/pull/46
