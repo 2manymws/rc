@@ -81,18 +81,18 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 		if err != nil {
 			switch {
 			case errors.Is(err, ErrCacheNotFound):
-				m.logger.Debug("cache not found", slog.String("method", req.Method), slog.String("url", req.URL.String()))
+				m.logger.Debug("cache not found", slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 			case errors.Is(err, ErrCacheExpired):
-				m.logger.Warn("cache expired", slog.String("method", req.Method), slog.String("url", req.URL.String()))
+				m.logger.Warn("cache expired", slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 			case errors.Is(err, ErrShouldNotUseCache):
-				m.logger.Debug("should not use cache", slog.String("method", req.Method), slog.String("url", req.URL.String()))
+				m.logger.Debug("should not use cache", slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 			default:
-				m.logger.Error("failed to load cache", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
+				m.logger.Error("failed to load cache", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 			}
 		}
 		cacheUsed, res, err := m.cacher.Handle(req, cachedReq, cachedRes, HandlerToRequester(next), now) //nostyle:handlerrors
 		if err != nil {
-			m.logger.Error("failed to handle cache", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
+			m.logger.Error("failed to handle cache", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 		}
 
 		// Response
@@ -110,23 +110,23 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 		w.WriteHeader(res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			m.logger.Error("failed to read response body", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
+			m.logger.Error("failed to read response body", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 		} else {
 			if _, err := w.Write(body); err != nil {
-				m.logger.Error("failed to write response body", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
+				m.logger.Error("failed to write response body", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 			}
 		}
 		if err := res.Body.Close(); err != nil {
-			m.logger.Error("failed to close response body", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
+			m.logger.Error("failed to close response body", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 		}
 
 		if cacheUsed {
-			m.logger.Debug("cache used", slog.String("method", req.Method), slog.String("url", req.URL.String()))
+			m.logger.Debug("cache used", slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 			return
 		}
 		ok, expires := m.cacher.Storable(req, res, now)
 		if !ok {
-			m.logger.Debug("cache not storable", slog.String("method", req.Method), slog.String("url", req.URL.String()))
+			m.logger.Debug("cache not storable", slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 			return
 		}
 		// Restore response body
@@ -134,9 +134,9 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 
 		// Store response as cache
 		if err := m.cacher.Store(req, res, expires); err != nil {
-			m.logger.Error("failed to store cache", err, slog.String("method", req.Method), slog.String("url", req.URL.String()))
+			m.logger.Error("failed to store cache", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 		}
-		m.logger.Debug("cache stored", slog.String("method", req.Method), slog.String("url", req.URL.String()))
+		m.logger.Debug("cache stored", slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 	})
 }
 
