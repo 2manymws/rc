@@ -323,13 +323,11 @@ func TestShared_Storable(t *testing.T) {
 			&http.Request{
 				Host:   "example.com",
 				Method: http.MethodGet,
-				Header: http.Header{
-					"Set-Cookie": []string{"k=v"},
-				},
 			},
 			&http.Response{
 				StatusCode: http.StatusOK,
 				Header: http.Header{
+					"Set-Cookie":    []string{"k=v"},
 					"Cache-Control": []string{"max-age=15"},
 				},
 			},
@@ -358,6 +356,54 @@ func TestShared_Storable(t *testing.T) {
 			},
 			true,
 			time.Date(2024, 12, 13, 14, 15, 25, 00, time.UTC),
+		},
+		{
+			"ExtendedRule(+15s) GET 200 Authorization: XXX -> No Store",
+			&http.Request{
+				Host:   "example.com",
+				Method: http.MethodGet,
+				Header: http.Header{
+					"Authorization": []string{"XXX"},
+				},
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Date": []string{"Mon, 13 Dec 2024 14:15:10 GMT"},
+				},
+			},
+			[]ExtendedRule{
+				&testRule{
+					cacheableMethods: []string{http.MethodGet},
+					cacheableStatus:  []int{http.StatusOK},
+					age:              15 * time.Second,
+				},
+			},
+			false,
+			time.Time{},
+		},
+		{
+			"ExtendedRule(+15s) GET 200 Set-Cookie: XXX -> No Store",
+			&http.Request{
+				Host:   "example.com",
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Set-Cookie": []string{"XXX"},
+					"Date":       []string{"Mon, 13 Dec 2024 14:15:10 GMT"},
+				},
+			},
+			[]ExtendedRule{
+				&testRule{
+					cacheableMethods: []string{http.MethodGet},
+					cacheableStatus:  []int{http.StatusOK},
+					age:              15 * time.Second,
+				},
+			},
+			false,
+			time.Time{},
 		},
 		{
 			"ExtendedRule(+15s) POST 201 -> +15s",
