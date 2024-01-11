@@ -111,7 +111,7 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			m.logger.Error("failed to read response body", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()), slog.Int("status", res.StatusCode))
-		} else {
+		} else if len(body) > 0 {
 			if _, err := w.Write(body); err != nil {
 				m.logger.Error("failed to write response body", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()), slog.Int("status", res.StatusCode))
 			}
