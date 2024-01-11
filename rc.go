@@ -87,12 +87,12 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 			case errors.Is(err, ErrShouldNotUseCache):
 				m.logger.Debug("should not use cache", slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 			default:
-				m.logger.Error("failed to load cache", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
+				m.logger.Error("failed to load cache", slog.String("error", err.Error()), slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 			}
 		}
 		cacheUsed, res, err := m.cacher.Handle(req, cachedReq, cachedRes, HandlerToRequester(next), now) //nostyle:handlerrors
 		if err != nil {
-			m.logger.Error("failed to handle cache", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
+			m.logger.Error("failed to handle cache", slog.String("error", err.Error()), slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()))
 		}
 
 		// Response
@@ -110,14 +110,14 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 		w.WriteHeader(res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			m.logger.Error("failed to read response body", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()), slog.Int("status", res.StatusCode))
+			m.logger.Error("failed to read response body", slog.String("error", err.Error()), slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()), slog.Int("status", res.StatusCode))
 		} else {
 			if _, err := w.Write(body); err != nil {
-				m.logger.Error("failed to write response body", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()), slog.Int("status", res.StatusCode))
+				m.logger.Error("failed to write response body", slog.String("error", err.Error()), slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()), slog.Int("status", res.StatusCode))
 			}
 		}
 		if err := res.Body.Close(); err != nil {
-			m.logger.Error("failed to close response body", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()), slog.Int("status", res.StatusCode))
+			m.logger.Error("failed to close response body", slog.String("error", err.Error()), slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()), slog.Int("status", res.StatusCode))
 		}
 
 		if cacheUsed {
@@ -134,7 +134,7 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 
 		// Store response as cache
 		if err := m.cacher.Store(req, res, expires); err != nil {
-			m.logger.Error("failed to store cache", err, slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()), slog.Int("status", res.StatusCode))
+			m.logger.Error("failed to store cache", slog.String("error", err.Error()), slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()), slog.Int("status", res.StatusCode))
 		}
 		m.logger.Debug("cache stored", slog.String("method", req.Method), slog.String("host", req.Host), slog.String("url", req.URL.String()), slog.Int("status", res.StatusCode))
 	})
