@@ -463,9 +463,7 @@ func TestShared_Handle(t *testing.T) {
 
 	origin200res := &http.Response{
 		StatusCode: http.StatusOK,
-		Header: http.Header{
-			"Age": []string{"0"},
-		},
+		Header:     http.Header{},
 	}
 	do200 := func(req *http.Request) (*http.Response, error) {
 		return &http.Response{
