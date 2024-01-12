@@ -9,9 +9,7 @@ import (
 func setAgeHeader(useCached bool, resHeader http.Header, now time.Time) {
 	// 4.2.3. Calculating Age
 	if !useCached {
-		if resHeader.Get("Age") == "" {
-			resHeader.Set("Age", "0")
-		}
+		// The presence of an Age header field implies that the response was not generated or validated by the origin server for this request. However, lack of an Age header field does not imply the origin was contacted.
 		return
 	}
 	// The following is straight code with the expectation that it will be optimized by the compiler
