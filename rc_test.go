@@ -147,9 +147,7 @@ func TestWithReverseProxy(t *testing.T) {
 			if tt.useReverseProxy {
 				p := func(next http.Handler) http.Handler {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						if strings.HasPrefix(r.URL.Path, "/path/to") {
-							r.URL.Path = strings.TrimPrefix(r.URL.Path, "/path/to")
-						}
+						r.URL.Path = strings.TrimPrefix(r.URL.Path, "/path/to")
 						next.ServeHTTP(w, r)
 					})
 				}
