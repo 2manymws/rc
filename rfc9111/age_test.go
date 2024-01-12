@@ -18,14 +18,12 @@ func TestSetAgeHeader(t *testing.T) {
 		wantHeader http.Header
 	}{
 		{
-			name:      "No cache and no Age header",
-			useCached: false,
-			resHeader: http.Header{},
-			now:       now,
-			wantAge:   "0",
-			wantHeader: http.Header{
-				"Age": []string{"0"},
-			},
+			name:       "No cache and no Age header",
+			useCached:  false,
+			resHeader:  http.Header{},
+			now:        now,
+			wantAge:    "",
+			wantHeader: http.Header{},
 		},
 		{
 			name:      "No cache and Age header +5sec",
