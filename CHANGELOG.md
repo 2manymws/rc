@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.9.0](https://github.com/2manymws/rc/compare/v0.8.2...v0.9.0) - 2024-01-12
+### Breaking Changes 🛠
+- If cache is not used, no Age header is given by @k1LoW in https://github.com/2manymws/rc/pull/54
+### Fix bug 🐛
+- Keep and use requests unaffected by the next middleware. by @k1LoW in https://github.com/2manymws/rc/pull/53
+
 ## [v0.8.2](https://github.com/2manymws/rc/compare/v0.8.1...v0.8.2) - 2024-01-11
 ### Fix bug 🐛
 - Fix badkey log by @k1LoW in https://github.com/2manymws/rc/pull/52
