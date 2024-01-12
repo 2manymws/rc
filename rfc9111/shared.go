@@ -118,12 +118,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 	}
 
 	// - the response status code is final (see https://httpwg.org/specs/rfc9110.html#rfc.section.15);
-	if contains(res.StatusCode, []int{
-		http.StatusContinue,
-		http.StatusSwitchingProtocols,
-		http.StatusProcessing,
-		http.StatusEarlyHints,
-	}) {
+	if !isFinalStatusCode(res.StatusCode) {
 		return s.storableWithExtendedRules(req, res, now)
 	}
 
@@ -366,6 +361,13 @@ func CalclateExpires(d *ResponseDirectives, resHeader http.Header, heuristicExpi
 
 	// Can't calculate expires
 	return time.Time{}
+}
+
+func isFinalStatusCode(status int) bool {
+	if status >= 100 && status < 200 {
+		return false
+	}
+	return true
 }
 
 func originDate(resHeader http.Header, now time.Time) time.Time {
