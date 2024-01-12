@@ -56,8 +56,9 @@ func newCacher(c Cacher) *cacher {
 }
 
 type cacheMw struct {
-	cacher *cacher
-	logger *slog.Logger
+	cacher         *cacher
+	useRequestBody bool
+	logger         *slog.Logger
 }
 
 func newCacheMw(c Cacher, opts ...Option) *cacheMw {
@@ -77,19 +78,11 @@ func newCacheMw(c Cacher, opts ...Option) *cacheMw {
 func (m *cacheMw) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		now := time.Now()
-		// Copy the request so that it is not affected by the next handler.
-		preq := req.Clone(req.Context()) // persistent request
-		b, err := io.ReadAll(preq.Body)
-		if err != nil {
-			m.logger.Error("failed to read request body", slog.String("error", err.Error()), slog.String("method", preq.Method), slog.String("host", preq.Host), slog.String("url", preq.URL.String()))
-		}
-		if err := preq.Body.Close(); err != nil {
-			m.logger.Error("failed to close request body", slog.String("error", err.Error()), slog.String("method", preq.Method), slog.String("host", preq.Host), slog.String("url", preq.URL.String()))
-		}
-		req.Body = io.NopCloser(bytes.NewReader(b))
-		preq.Body = io.NopCloser(bytes.NewReader(b))
 
-		cachedReq, cachedRes, err := m.cacher.Load(req) //nostyle:handlerrors
+		// Copy the request so that it is not affected by the next handler.
+		req, preq := m.duplicateRequest(req)
+
+		cachedReq, cachedRes, err := m.cacher.Load(preq) //nostyle:handlerrors
 		if err != nil {
 			switch {
 			case errors.Is(err, ErrCacheNotFound):
@@ -152,12 +145,38 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 	})
 }
 
+func (m *cacheMw) duplicateRequest(req *http.Request) (*http.Request, *http.Request) {
+	copy := req.Clone(req.Context())
+	if !m.useRequestBody {
+		// request Body is not copied since it is not used.
+		// req.Body is already closed.
+		return copy, req
+	}
+	b, err := io.ReadAll(copy.Body)
+	if err != nil {
+		m.logger.Error("failed to read request body", slog.String("error", err.Error()), slog.String("method", copy.Method), slog.String("host", copy.Host), slog.String("url", copy.URL.String()))
+	}
+	if err := copy.Body.Close(); err != nil {
+		m.logger.Error("failed to close request body", slog.String("error", err.Error()), slog.String("method", copy.Method), slog.String("host", copy.Host), slog.String("url", copy.URL.String()))
+	}
+	req.Body = io.NopCloser(bytes.NewReader(b))
+	copy.Body = io.NopCloser(bytes.NewReader(b))
+	return copy, req
+}
+
 type Option func(*cacheMw)
 
 // WithLogger sets logger (slog.Logger).
 func WithLogger(l *slog.Logger) Option {
 	return func(m *cacheMw) {
 		m.logger = l
+	}
+}
+
+// UseRequestBody enables to use request body as cache key.
+func UseRequestBody() Option {
+	return func(m *cacheMw) {
+		m.useRequestBody = true
 	}
 }
 
