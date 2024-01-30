@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.9.4](https://github.com/2manymws/rc/compare/v0.9.3...v0.9.4) - 2024-01-30
+### New Features 🎉
+- Support for setting header names to mask by @k1LoW in https://github.com/2manymws/rc/pull/64
+
 ## [v0.9.3](https://github.com/2manymws/rc/compare/v0.9.2...v0.9.3) - 2024-01-30
 ### Other Changes
 - Add headers to log output by @k1LoW in https://github.com/2manymws/rc/pull/61
