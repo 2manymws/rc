@@ -88,7 +88,7 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 			case errors.Is(err, ErrCacheNotFound):
 				m.logger.Debug("cache not found", slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", maskHeader(preq.Header)))
 			case errors.Is(err, ErrCacheExpired):
-				m.logger.Warn("cache expired", slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", maskHeader(preq.Header)))
+				m.logger.Debug("cache expired", slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", maskHeader(preq.Header)))
 			case errors.Is(err, ErrShouldNotUseCache):
 				m.logger.Debug("should not use cache", slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", maskHeader(preq.Header)))
 			default:
