@@ -118,7 +118,11 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 			m.logger.Error("failed to read response body", slog.String("error", err.Error()), slog.String("method", preq.Method), slog.String("host", preq.Host), slog.String("url", preq.URL.String()), slog.Int("status", res.StatusCode))
 		} else {
 			if _, err := w.Write(body); err != nil {
-				m.logger.Error("failed to write response body", slog.String("error", err.Error()), slog.String("method", preq.Method), slog.String("host", preq.Host), slog.String("url", preq.URL.String()), slog.Int("status", res.StatusCode))
+				if errors.Is(err, http.ErrBodyNotAllowed) {
+					m.logger.Warn("failed to write response body", slog.String("error", err.Error()), slog.String("method", preq.Method), slog.String("host", preq.Host), slog.String("url", preq.URL.String()), slog.Int("status", res.StatusCode))
+				} else {
+					m.logger.Error("failed to write response body", slog.String("error", err.Error()), slog.String("method", preq.Method), slog.String("host", preq.Host), slog.String("url", preq.URL.String()), slog.Int("status", res.StatusCode))
+				}
 			}
 		}
 		if err := res.Body.Close(); err != nil {
