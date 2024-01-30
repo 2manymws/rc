@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.9.2](https://github.com/2manymws/rc/compare/v0.9.1...v0.9.2) - 2024-01-30
+### Other Changes
+- Add isFinalStatusCode() by @k1LoW in https://github.com/2manymws/rc/pull/58
+- Because many upstreams may return a body with 1xx/204/304 status codes. by @k1LoW in https://github.com/2manymws/rc/pull/60
+
 ## [v0.9.1](https://github.com/2manymws/rc/compare/v0.9.0...v0.9.1) - 2024-01-12
 ### Breaking Changes 🛠
 - No request body is used for cache handling by default. by @k1LoW in https://github.com/2manymws/rc/pull/56
