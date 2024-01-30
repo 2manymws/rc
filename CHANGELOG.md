@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.9.3](https://github.com/2manymws/rc/compare/v0.9.2...v0.9.3) - 2024-01-30
+### Other Changes
+- Add headers to log output by @k1LoW in https://github.com/2manymws/rc/pull/61
+- Cache expiration is normal behavior by @k1LoW in https://github.com/2manymws/rc/pull/63
+
 ## [v0.9.2](https://github.com/2manymws/rc/compare/v0.9.1...v0.9.2) - 2024-01-30
 ### Other Changes
 - Add isFinalStatusCode() by @k1LoW in https://github.com/2manymws/rc/pull/58
