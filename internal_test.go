@@ -54,14 +54,16 @@ func TestDuplicateRequest(t *testing.T) {
 
 func TestMaskHeader(t *testing.T) {
 	tests := []struct {
-		h    http.Header
-		want http.Header
+		h                 http.Header
+		headerNamesToMask []string
+		want              http.Header
 	}{
-		{nil, nil},
+		{nil, nil, nil},
 		{
 			http.Header{
 				"Date": []string{"Mon, 02 Jan 2006 15:04:05 GMT"},
 			},
+			defaultHeaderNamesToMask,
 			http.Header{
 				"Date": []string{"Mon, 02 Jan 2006 15:04:05 GMT"},
 			},
@@ -71,6 +73,7 @@ func TestMaskHeader(t *testing.T) {
 				"Date":       []string{"Mon, 02 Jan 2006 15:04:05 GMT"},
 				"Set-Cookie": []string{"session=1234; Path=/; Expires=Wed, 09 Jun 2021 10:18:14 GMT; HttpOnly"},
 			},
+			defaultHeaderNamesToMask,
 			http.Header{
 				"Date":       []string{"Mon, 02 Jan 2006 15:04:05 GMT"},
 				"Set-Cookie": []string{"*****"},
@@ -84,6 +87,7 @@ func TestMaskHeader(t *testing.T) {
 					"session=5678; Path=/; Expires=Wed, 09 Jun 2021 10:18:14 GMT; HttpOnly",
 				},
 			},
+			defaultHeaderNamesToMask,
 			http.Header{
 				"Date":       []string{"Mon, 02 Jan 2006 15:04:05 GMT"},
 				"Set-Cookie": []string{"*****"},
@@ -95,6 +99,7 @@ func TestMaskHeader(t *testing.T) {
 				"Set-Cookie":    []string{"session=1234; Path=/; Expires=Wed, 09 Jun 2021 10:18:14 GMT; HttpOnly"},
 				"Authorization": []string{"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."},
 			},
+			defaultHeaderNamesToMask,
 			http.Header{
 				"Date":          []string{"Mon, 02 Jan 2006 15:04:05 GMT"},
 				"Set-Cookie":    []string{"*****"},
@@ -110,16 +115,34 @@ func TestMaskHeader(t *testing.T) {
 					"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.",
 				},
 			},
+			defaultHeaderNamesToMask,
 			http.Header{
 				"Date":          []string{"Mon, 02 Jan 2006 15:04:05 GMT"},
 				"Set-Cookie":    []string{"*****"},
 				"Authorization": []string{"*****"},
 			},
 		},
+		{
+			http.Header{
+				"Date":          []string{"Mon, 02 Jan 2006 15:04:05 GMT"},
+				"Set-Cookie":    []string{"session=1234; Path=/; Expires=Wed, 09 Jun 2021 10:18:14 GMT; HttpOnly"},
+				"Authorization": []string{"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."},
+			},
+			nil,
+			http.Header{
+				"Date":          []string{"Mon, 02 Jan 2006 15:04:05 GMT"},
+				"Set-Cookie":    []string{"session=1234; Path=/; Expires=Wed, 09 Jun 2021 10:18:14 GMT; HttpOnly"},
+				"Authorization": []string{"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."},
+			},
+		},
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			got := maskHeader(tt.h)
+			m := &cacheMw{
+				headerNamesToMask: defaultHeaderNamesToMask,
+			}
+			HeaderNamesToMask(tt.headerNamesToMask)(m)
+			got := m.maskHeader(tt.h)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("got %v want %v", got, tt.want)
 			}
