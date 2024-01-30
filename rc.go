@@ -203,7 +203,7 @@ func UseRequestBody() Option {
 	}
 }
 
-// HeaderNamesToMask sets header names to mask.
+// HeaderNamesToMask sets header names to mask in logs.
 func HeaderNamesToMask(names []string) Option {
 	return func(m *cacheMw) {
 		m.headerNamesToMask = names
