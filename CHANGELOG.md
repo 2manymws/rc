@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.9.5](https://github.com/2manymws/rc/compare/v0.9.4...v0.9.5) - 2024-02-02
+### Other Changes
+- Fix handling for errors "failed to write response body" by @k1LoW in https://github.com/2manymws/rc/pull/66
+
 ## [v0.9.4](https://github.com/2manymws/rc/compare/v0.9.3...v0.9.4) - 2024-01-30
 ### New Features 🎉
 - Support for setting header names to mask by @k1LoW in https://github.com/2manymws/rc/pull/64
