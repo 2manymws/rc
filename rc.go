@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"time"
 
 	"github.com/2manymws/rc/rfc9111"
@@ -126,9 +127,18 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 			m.logger.Error("failed to read response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
 		} else {
 			if _, err := w.Write(body); err != nil {
-				if errors.Is(err, http.ErrBodyNotAllowed) {
+				// Error as debug
+				// - os.ErrDeadlineExceeded: The request context has been canceled or has expired.
+				// - "client disconnected": The client disconnected. (net/http.http2errClientDisconnected)
+				// - "http2: stream closed": The client disconnected. (net/http.http2errStreamClosed)
+				// Error as warning
+				// - http.ErrBodyNotAllowed: The request method does not allow a body.
+				switch {
+				case errors.Is(err, os.ErrDeadlineExceeded) || contains([]string{"client disconnected", "http2: stream closed"}, err.Error()):
+					m.logger.Debug("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
+				case errors.Is(err, http.ErrBodyNotAllowed):
 					m.logger.Warn("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
-				} else {
+				default:
 					m.logger.Error("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
 				}
 			}
@@ -225,4 +235,13 @@ func HandlerToRequester(h http.Handler) func(*http.Request) (*http.Response, err
 		res.Header = rec.Header()
 		return res, nil
 	}
+}
+
+func contains(s []string, e string) bool {
+	for _, v := range s {
+		if e == v {
+			return true
+		}
+	}
+	return false
 }
