@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"syscall"
 	"time"
 
 	"github.com/2manymws/rc/rfc9111"
@@ -131,10 +132,12 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 				// - os.ErrDeadlineExceeded: The request context has been canceled or has expired.
 				// - "client disconnected": The client disconnected. (net/http.http2errClientDisconnected)
 				// - "http2: stream closed": The client disconnected. (net/http.http2errStreamClosed)
+				// - syscall.ECONNRESET: The client disconnected. ("connection reset by peer")
+				// - syscall.EPIPE: The client disconnected. ("broken pipe")
 				// Error as warning
 				// - http.ErrBodyNotAllowed: The request method does not allow a body.
 				switch {
-				case errors.Is(err, os.ErrDeadlineExceeded) || contains([]string{"client disconnected", "http2: stream closed"}, err.Error()):
+				case errors.Is(err, os.ErrDeadlineExceeded) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) || contains([]string{"client disconnected", "http2: stream closed"}, err.Error()):
 					m.logger.Debug("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
 				case errors.Is(err, http.ErrBodyNotAllowed):
 					m.logger.Warn("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
