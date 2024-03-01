@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.9.8](https://github.com/2manymws/rc/compare/v0.9.7...v0.9.8) - 2024-03-01
+### Fix bug 🐛
+- Remember that the request may be nil by @k1LoW in https://github.com/2manymws/rc/pull/72
+
 ## [v0.9.7](https://github.com/2manymws/rc/compare/v0.9.6...v0.9.7) - 2024-02-26
 ### Other Changes
 - It is desirable that there should be no content body in the response, but the proxy server cannot handle it, so it is used as a debug log. by @k1LoW in https://github.com/2manymws/rc/pull/70
