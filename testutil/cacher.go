@@ -10,6 +10,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/2manymws/rc"
 )
 
 var (
@@ -101,7 +103,7 @@ func NewGetOnlyCache(t testing.TB) *GetOnlyCache {
 func (c *GetOnlyCache) Load(req *http.Request) (*http.Request, *http.Response, error) {
 	c.t.Helper()
 	if req.Method != http.MethodGet {
-		return nil, nil, errNoCache
+		return nil, nil, rc.ErrShouldNotUseCache
 	}
 	key := reqToKey(req)
 	c.mu.Lock()
