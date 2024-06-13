@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.10.0](https://github.com/2manymws/rc/compare/v0.9.9...v0.10.0) - 2024-06-13
+### Breaking Changes 🛠
+- If `rc.ErrShouldNotUseCache`, skip all caching processes. by @k1LoW in https://github.com/2manymws/rc/pull/76
+
 ## [v0.9.9](https://github.com/2manymws/rc/compare/v0.9.8...v0.9.9) - 2024-06-13
 ### Other Changes
 - rc does not support websocket. by @k1LoW in https://github.com/2manymws/rc/pull/74
