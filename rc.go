@@ -24,8 +24,8 @@ var defaultHeaderNamesToMask = []string{
 type Cacher interface {
 	// Load loads the request/response cache.
 	// If the cache is not found, it returns ErrCacheNotFound.
-	// If not caching, it returns ErrNoCache.
 	// If the cache is expired, it returns ErrCacheExpired.
+	// If not caching, it returns ErrShouldNotUseCache.
 	Load(req *http.Request) (cachedReq *http.Request, cachedRes *http.Response, err error)
 	// Store stores the response cache.
 	Store(req *http.Request, res *http.Response, expires time.Time) error
