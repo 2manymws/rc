@@ -3,25 +3,20 @@ package testutil
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"errors"
 	"io"
 	"net/http"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/2manymws/rc"
 )
 
 var (
 	_ Cacher = &AllCache{}
 	_ Cacher = &GetOnlyCache{}
 )
-
-// errCacheNotFound is returned when the cache is not found
-var errCacheNotFound error = errors.New("cache not found")
-
-// errNoCache is returned if not caching
-var errNoCache error = errors.New("no cache")
 
 type Cacher interface {
 	Load(req *http.Request) (cachedReq *http.Request, cachedRes *http.Response, err error)
@@ -61,7 +56,7 @@ func (c *AllCache) Load(req *http.Request) (*http.Request, *http.Response, error
 	cc, ok := c.m[key]
 	c.mu.Unlock()
 	if !ok {
-		return nil, nil, errCacheNotFound
+		return nil, nil, rc.ErrCacheNotFound
 	}
 	cachedReq, cachedRes, err := decodeReqRes(cc)
 	if err != nil {
@@ -101,14 +96,14 @@ func NewGetOnlyCache(t testing.TB) *GetOnlyCache {
 func (c *GetOnlyCache) Load(req *http.Request) (*http.Request, *http.Response, error) {
 	c.t.Helper()
 	if req.Method != http.MethodGet {
-		return nil, nil, errNoCache
+		return nil, nil, rc.ErrShouldNotUseCache
 	}
 	key := reqToKey(req)
 	c.mu.Lock()
 	cc, ok := c.m[key]
 	c.mu.Unlock()
 	if !ok {
-		return nil, nil, errCacheNotFound
+		return nil, nil, rc.ErrCacheNotFound
 	}
 	cachedReq, cachedRes, err := decodeReqRes(cc)
 	if err != nil {
@@ -121,9 +116,6 @@ func (c *GetOnlyCache) Load(req *http.Request) (*http.Request, *http.Response, e
 
 func (c *GetOnlyCache) Store(req *http.Request, res *http.Response, expires time.Time) error {
 	c.t.Helper()
-	if req.Method != http.MethodGet {
-		return errNoCache
-	}
 	key := reqToKey(req)
 	cc, err := encodeReqRes(req, res)
 	if err != nil {

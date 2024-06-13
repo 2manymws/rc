@@ -24,8 +24,8 @@ var defaultHeaderNamesToMask = []string{
 type Cacher interface {
 	// Load loads the request/response cache.
 	// If the cache is not found, it returns ErrCacheNotFound.
-	// If not caching, it returns ErrNoCache.
 	// If the cache is expired, it returns ErrCacheExpired.
+	// If not caching, it returns ErrShouldNotUseCache.
 	Load(req *http.Request) (cachedReq *http.Request, cachedRes *http.Response, err error)
 	// Store stores the response cache.
 	Store(req *http.Request, res *http.Response, expires time.Time) error
@@ -107,6 +107,9 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 				m.logger.Debug("cache expired", slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)))
 			case errors.Is(err, ErrShouldNotUseCache):
 				m.logger.Debug("should not use cache", slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)))
+				// Skip caching
+				next.ServeHTTP(w, req)
+				return
 			default:
 				m.logger.Error("failed to load cache", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)))
 			}
