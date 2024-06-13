@@ -52,6 +52,15 @@ func TestRC(t *testing.T) {
 			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":3}`)},
 			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}, "X-Cache": []string{"HIT"}}, Body: testutil.NewBody(`{"count":2}`)},
 		}, 1},
+		{"does not support websocket", testutil.NewAllCache(t), []*http.Request{
+			{Method: http.MethodGet, Header: http.Header{"Connection": []string{"Upgrade"}, "Upgrade": []string{"websocket"}}, URL: testutil.MustParseURL("http://example.com/1")},
+			{Method: http.MethodGet, Header: http.Header{"Connection": []string{"Upgrade"}, "UPGRADE": []string{"websocket"}}, URL: testutil.MustParseURL("http://example.com/1")},
+			{Method: http.MethodGet, Header: http.Header{"Connection": []string{"Upgrade"}, "Upgrade": []string{"WEBSOCKET"}}, URL: testutil.MustParseURL("http://example.com/1")},
+		}, []*http.Response{
+			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":1}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":2}`)},
+			{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": []string{"max-age=60"}, "Content-Type": []string{"application/json"}}, Body: testutil.NewBody(`{"count":3}`)},
+		}, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

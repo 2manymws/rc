@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"syscall"
 	"time"
 
@@ -87,6 +88,11 @@ func newCacheMw(c Cacher, opts ...Option) *cacheMw {
 
 func (m *cacheMw) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// rc does not support websocket.
+		if strings.ToLower(req.Header.Get("Connection")) == "upgrade" && strings.ToLower(req.Header.Get("Upgrade")) == "websocket" {
+			next.ServeHTTP(w, req)
+			return
+		}
 		now := time.Now()
 
 		// Copy the request so that it is not affected by the next handler.
