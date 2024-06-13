@@ -17,9 +17,9 @@ func NewHTTPRouter(t *testing.T) *httpstub.Router {
 	count := 0
 	r.Path("/no-store-header").Handler(func(w http.ResponseWriter, r *http.Request) {
 		count++
-		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "no-store")
+		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"count":%d}`, count))) //nostyle:handlerrors
 	})
 	r.Match(func(r *http.Request) bool { return strings.HasPrefix(r.URL.Path, "/path/to") }).Handler(func(w http.ResponseWriter, r *http.Request) {
@@ -27,9 +27,9 @@ func NewHTTPRouter(t *testing.T) *httpstub.Router {
 	})
 	r.Match(func(r *http.Request) bool { return true }).Handler(func(w http.ResponseWriter, r *http.Request) {
 		count++
-		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "max-age=60")
+		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(fmt.Sprintf(`{"count":%d}`, count))) //nostyle:handlerrors
 	})
 	return r
