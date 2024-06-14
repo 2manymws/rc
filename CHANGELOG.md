@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.11.0](https://github.com/2manymws/rc/compare/v0.10.0...v0.11.0) - 2024-06-14
+### Breaking Changes 🛠
+- Use recorder instead of httptest.ResponseRecorder. by @k1LoW in https://github.com/2manymws/rc/pull/78
+
 ## [v0.10.0](https://github.com/2manymws/rc/compare/v0.9.9...v0.10.0) - 2024-06-13
 ### Breaking Changes 🛠
 - If `rc.ErrShouldNotUseCache`, skip all caching processes. by @k1LoW in https://github.com/2manymws/rc/pull/76
