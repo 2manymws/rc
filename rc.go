@@ -189,20 +189,20 @@ func (m *cacheMw) handlerToRequester(h http.Handler, reqc *http.Request, now tim
 		defer rec.Reset()
 		h.ServeHTTP(rec, req)
 		res := rec.Result()
+		resc := rec.Result()
 
-		ok, expires := m.cacher.Storable(reqc, res, now)
-		if !ok {
-			m.logger.Debug("cache not storable", slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
-			return res, nil
-		}
-
-		res2 := rec.Result()
 		go func() {
-			// Store response as cache
-			if err := m.cacher.Store(reqc, res2, expires); err != nil {
-				m.logger.Error("failed to store cache", slog.String("error", err.Error()), slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode))
+			ok, expires := m.cacher.Storable(reqc, resc, now)
+			if !ok {
+				m.logger.Debug("cache not storable", slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(resc.Header)))
+				return
 			}
-			m.logger.Debug("cache stored", slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode))
+
+			// Store response as cache
+			if err := m.cacher.Store(reqc, resc, expires); err != nil {
+				m.logger.Error("failed to store cache", slog.String("error", err.Error()), slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", resc.StatusCode))
+			}
+			m.logger.Debug("cache stored", slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", resc.StatusCode))
 		}()
 
 		return res, nil
