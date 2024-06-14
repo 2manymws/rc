@@ -95,27 +95,28 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 		now := time.Now()
 
 		// Copy the request so that it is not affected by the next handler.
-		req, preq := m.duplicateRequest(req)
+		// reqc is the request to be used for caching.
+		req, reqc := m.duplicateRequest(req)
 
-		cachedReq, cachedRes, err := m.cacher.Load(preq) //nostyle:handlerrors
+		cachedReq, cachedRes, err := m.cacher.Load(reqc) //nostyle:handlerrors
 		if err != nil {
 			switch {
 			case errors.Is(err, ErrCacheNotFound):
-				m.logger.Debug("cache not found", slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)))
+				m.logger.Debug("cache not found", slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)))
 			case errors.Is(err, ErrCacheExpired):
-				m.logger.Debug("cache expired", slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)))
+				m.logger.Debug("cache expired", slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)))
 			case errors.Is(err, ErrShouldNotUseCache):
-				m.logger.Debug("should not use cache", slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)))
+				m.logger.Debug("should not use cache", slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)))
 				// Skip caching
 				next.ServeHTTP(w, req)
 				return
 			default:
-				m.logger.Error("failed to load cache", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)))
+				m.logger.Error("failed to load cache", slog.String("error", err.Error()), slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)))
 			}
 		}
-		cacheUsed, res, err := m.cacher.Handle(req, cachedReq, cachedRes, HandlerToRequester(next), now) //nostyle:handlerrors
+		cacheUsed, res, err := m.cacher.Handle(req, cachedReq, cachedRes, m.handlerToRequester(next, reqc, now), now) //nostyle:handlerrors
 		if err != nil {
-			m.logger.Error("failed to handle cache", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)))
+			m.logger.Error("failed to handle cache", slog.String("error", err.Error()), slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)))
 		}
 
 		// Response
@@ -133,11 +134,6 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 		w.WriteHeader(res.StatusCode)
 
 		ww := w.(io.Writer)
-		b := new(bytes.Buffer)
-		if !cacheUsed {
-			// If the cache is not used, duplicate the response body for caching.
-			ww = io.MultiWriter(ww, b)
-		}
 		buf := getCopyBuf()
 		defer putCopyBuf(buf)
 		if _, err := io.CopyBuffer(ww, res.Body, buf); err != nil {
@@ -150,35 +146,22 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 			// - http.ErrBodyNotAllowed: The request method does not allow a body.
 			switch {
 			case errors.Is(err, os.ErrDeadlineExceeded) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) || contains([]string{"client disconnected", "http2: stream closed"}, err.Error()):
-				m.logger.Debug("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
+				m.logger.Debug("failed to write response body", slog.String("error", err.Error()), slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
 			case errors.Is(err, http.ErrBodyNotAllowed):
 				// It is desirable that there should be no content body in the response, but the proxy server cannot handle it, so it is used as a debug log.
-				m.logger.Debug("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
+				m.logger.Debug("failed to write response body", slog.String("error", err.Error()), slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
 			default:
-				m.logger.Error("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
+				m.logger.Error("failed to write response body", slog.String("error", err.Error()), slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
 			}
 		}
 		if err := res.Body.Close(); err != nil {
-			m.logger.Error("failed to close response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
+			m.logger.Error("failed to close response body", slog.String("error", err.Error()), slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
 		}
 
 		if cacheUsed {
-			m.logger.Debug("cache used", slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode))
+			m.logger.Debug("cache used", slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode))
 			return
 		}
-		ok, expires := m.cacher.Storable(preq, res, now)
-		if !ok {
-			m.logger.Debug("cache not storable", slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
-			return
-		}
-		// Restore response body
-		res.Body = io.NopCloser(b)
-
-		// Store response as cache
-		if err := m.cacher.Store(preq, res, expires); err != nil {
-			m.logger.Error("failed to store cache", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode))
-		}
-		m.logger.Debug("cache stored", slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode))
 	})
 }
 
@@ -199,6 +182,31 @@ func (m *cacheMw) duplicateRequest(req *http.Request) (*http.Request, *http.Requ
 	req.Body = io.NopCloser(bytes.NewReader(b))
 	copy.Body = io.NopCloser(bytes.NewReader(b))
 	return copy, req
+}
+
+func (m *cacheMw) handlerToRequester(h http.Handler, reqc *http.Request, now time.Time) func(*http.Request) (*http.Response, error) {
+	return func(req *http.Request) (*http.Response, error) {
+		rec := newRecorder()
+		h.ServeHTTP(rec, req)
+		res := rec.Result()
+
+		ok, expires := m.cacher.Storable(reqc, res, now)
+		if !ok {
+			m.logger.Debug("cache not storable", slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
+			return res, nil
+		}
+
+		res2 := rec.Result()
+		go func() {
+			// Store response as cache
+			if err := m.cacher.Store(reqc, res2, expires); err != nil {
+				m.logger.Error("failed to store cache", slog.String("error", err.Error()), slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode))
+			}
+			m.logger.Debug("cache stored", slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode))
+		}()
+
+		return res, nil
+	}
 }
 
 func (m *cacheMw) maskHeader(h http.Header) http.Header {
@@ -241,17 +249,6 @@ func New(cacher Cacher, opts ...Option) func(next http.Handler) http.Handler {
 	return rl.Handler
 }
 
-// HandlerToRequester converts http.Handler to func(*http.Request) (*http.Response, error).
-func HandlerToRequester(h http.Handler) func(*http.Request) (*http.Response, error) {
-	return func(req *http.Request) (*http.Response, error) {
-		rec := newRecorder()
-		h.ServeHTTP(rec, req)
-		res := rec.Result()
-		res.Header = rec.Header()
-		return res, nil
-	}
-}
-
 type recorder struct {
 	statusCode int
 	header     http.Header
@@ -284,7 +281,7 @@ func (r *recorder) Result() *http.Response {
 		Status:        http.StatusText(r.statusCode),
 		StatusCode:    r.statusCode,
 		Header:        r.header.Clone(),
-		Body:          io.NopCloser(r.buf),
+		Body:          io.NopCloser(bytes.NewReader(r.buf.Bytes())),
 		ContentLength: int64(r.buf.Len()),
 	}
 }
