@@ -160,7 +160,6 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 
 		if cacheUsed {
 			m.logger.Debug("cache used", slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()), slog.Any("headers", m.maskHeader(reqc.Header)), slog.Int("status", res.StatusCode))
-			return
 		}
 	})
 }
