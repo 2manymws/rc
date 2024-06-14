@@ -132,27 +132,30 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 			}
 		}
 		w.WriteHeader(res.StatusCode)
-		body, err := io.ReadAll(res.Body)
-		if err != nil {
-			m.logger.Error("failed to read response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
-		} else {
-			if _, err := w.Write(body); err != nil {
-				// Error as debug
-				// - os.ErrDeadlineExceeded: The request context has been canceled or has expired.
-				// - "client disconnected": The client disconnected. (net/http.http2errClientDisconnected)
-				// - "http2: stream closed": The client disconnected. (net/http.http2errStreamClosed)
-				// - syscall.ECONNRESET: The client disconnected. ("connection reset by peer")
-				// - syscall.EPIPE: The client disconnected. ("broken pipe")
-				// - http.ErrBodyNotAllowed: The request method does not allow a body.
-				switch {
-				case errors.Is(err, os.ErrDeadlineExceeded) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) || contains([]string{"client disconnected", "http2: stream closed"}, err.Error()):
-					m.logger.Debug("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
-				case errors.Is(err, http.ErrBodyNotAllowed):
-					// It is desirable that there should be no content body in the response, but the proxy server cannot handle it, so it is used as a debug log.
-					m.logger.Debug("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
-				default:
-					m.logger.Error("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
-				}
+
+		ww := w.(io.Writer)
+		b := new(bytes.Buffer)
+		if !cacheUsed {
+			ww = io.MultiWriter(ww, b)
+		}
+		buf := getCopyBuf()
+		defer putCopyBuf(buf)
+		if _, err := io.CopyBuffer(ww, res.Body, buf); err != nil {
+			// Error as debug
+			// - os.ErrDeadlineExceeded: The request context has been canceled or has expired.
+			// - "client disconnected": The client disconnected. (net/http.http2errClientDisconnected)
+			// - "http2: stream closed": The client disconnected. (net/http.http2errStreamClosed)
+			// - syscall.ECONNRESET: The client disconnected. ("connection reset by peer")
+			// - syscall.EPIPE: The client disconnected. ("broken pipe")
+			// - http.ErrBodyNotAllowed: The request method does not allow a body.
+			switch {
+			case errors.Is(err, os.ErrDeadlineExceeded) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) || contains([]string{"client disconnected", "http2: stream closed"}, err.Error()):
+				m.logger.Debug("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
+			case errors.Is(err, http.ErrBodyNotAllowed):
+				// It is desirable that there should be no content body in the response, but the proxy server cannot handle it, so it is used as a debug log.
+				m.logger.Debug("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
+			default:
+				m.logger.Error("failed to write response body", slog.String("error", err.Error()), slog.String("host", preq.Host), slog.String("method", preq.Method), slog.String("url", preq.URL.String()), slog.Any("headers", m.maskHeader(preq.Header)), slog.Int("status", res.StatusCode), slog.Any("response_headers", m.maskHeader(res.Header)))
 			}
 		}
 		if err := res.Body.Close(); err != nil {
@@ -169,7 +172,7 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 			return
 		}
 		// Restore response body
-		res.Body = io.NopCloser(bytes.NewReader(body))
+		res.Body = io.NopCloser(b)
 
 		// Store response as cache
 		if err := m.cacher.Store(preq, res, expires); err != nil {
