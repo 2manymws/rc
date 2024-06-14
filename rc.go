@@ -135,6 +135,7 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 		ww := w.(io.Writer)
 		b := new(bytes.Buffer)
 		if !cacheUsed {
+			// If the cache is not used, duplicate the response body for caching.
 			ww = io.MultiWriter(ww, b)
 		}
 		buf := getCopyBuf()
