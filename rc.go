@@ -187,6 +187,7 @@ func (m *cacheMw) duplicateRequest(req *http.Request) (*http.Request, *http.Requ
 func (m *cacheMw) handlerToRequester(h http.Handler, reqc *http.Request, now time.Time) func(*http.Request) (*http.Response, error) {
 	return func(req *http.Request) (*http.Response, error) {
 		rec := newRecorder()
+		defer rec.Reset()
 		h.ServeHTTP(rec, req)
 		res := rec.Result()
 
@@ -284,6 +285,12 @@ func (r *recorder) Result() *http.Response {
 		Body:          io.NopCloser(bytes.NewReader(r.buf.Bytes())),
 		ContentLength: int64(r.buf.Len()),
 	}
+}
+
+func (r *recorder) Reset() {
+	r.statusCode = 0
+	r.header = make(http.Header)
+	r.buf.Reset()
 }
 
 func contains(s []string, e string) bool {
