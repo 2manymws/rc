@@ -1,10 +1,12 @@
 module github.com/2manymws/rc
 
-go 1.21.5
+go 1.21.11
+
+toolchain go1.22.3
 
 require (
 	github.com/google/go-cmp v0.6.0
-	github.com/k1LoW/httpstub v0.16.4
+	github.com/k1LoW/httpstub v0.16.5
 )
 
 require (
@@ -13,7 +15,7 @@ require (
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/minio/pkg v1.7.5 // indirect
-	github.com/pb33f/libopenapi v0.16.7 // indirect
+	github.com/pb33f/libopenapi v0.16.8 // indirect
 	github.com/pb33f/libopenapi-validator v0.0.56 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
