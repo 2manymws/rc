@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.12.0](https://github.com/2manymws/rc/compare/v0.11.0...v0.12.0) - 2024-07-12
+### New Features 🎉
+- Avoid getting request body as much as possible in the handler. by @k1LoW in https://github.com/2manymws/rc/pull/81
+### Other Changes
+- Use `http.Read*` in testutil by @k1LoW in https://github.com/2manymws/rc/pull/83
+
 ## [v0.11.0](https://github.com/2manymws/rc/compare/v0.10.0...v0.11.0) - 2024-06-14
 ### Breaking Changes 🛠
 - Use recorder instead of httptest.ResponseRecorder. by @k1LoW in https://github.com/2manymws/rc/pull/78
