@@ -3,53 +3,30 @@ package testutil
 // Copy from github.com/2manymws/rcutil
 
 import (
+	"bufio"
 	"bytes"
-	"io"
 	"net/http"
-	"net/url"
 )
 
 type cachedReqRes struct {
-	Method    string      `json:"method"`
-	Host      string      `json:"host"`
-	URL       string      `json:"url"`
-	ReqHeader http.Header `json:"req_header"`
-	ReqBody   []byte      `json:"req_body"`
-
-	StatusCode int         `json:"status_code"`
-	ResHeader  http.Header `json:"res_header"`
-	ResBody    []byte      `json:"res_body"`
+	req []byte
+	res []byte
 }
 
 // encodeReqRes encodes http.Request and http.Response.
 func encodeReqRes(req *http.Request, res *http.Response) (*cachedReqRes, error) {
+	reqb := &bytes.Buffer{}
+	if err := req.Write(reqb); err != nil {
+		return nil, err
+	}
+	resb := &bytes.Buffer{}
+	if err := res.Write(resb); err != nil {
+		return nil, err
+	}
+
 	c := &cachedReqRes{
-		Method:    req.Method,
-		Host:      req.Host,
-		URL:       req.URL.String(),
-		ReqHeader: req.Header,
-
-		StatusCode: res.StatusCode,
-		ResHeader:  res.Header,
-	}
-	{
-		// FIXME: Use stream
-		b, err := io.ReadAll(req.Body)
-		if err != nil {
-			return nil, err
-		}
-		defer req.Body.Close()
-		c.ReqBody = b
-	}
-
-	{
-		// FIXME: Use stream
-		b, err := io.ReadAll(res.Body)
-		if err != nil {
-			return nil, err
-		}
-		defer res.Body.Close()
-		c.ResBody = b
+		req: reqb.Bytes(),
+		res: resb.Bytes(),
 	}
 
 	return c, nil
@@ -57,22 +34,15 @@ func encodeReqRes(req *http.Request, res *http.Response) (*cachedReqRes, error) 
 
 // decodeReqRes decodes to http.Request and http.Response.
 func decodeReqRes(c *cachedReqRes) (*http.Request, *http.Response, error) {
-	u, err := url.Parse(c.URL)
+	reqb := bytes.NewReader(c.req)
+	req, err := http.ReadRequest(bufio.NewReader(reqb))
 	if err != nil {
 		return nil, nil, err
 	}
-	req := &http.Request{
-		Method: c.Method,
-		Host:   c.Host,
-		URL:    u,
-		Header: c.ReqHeader,
-		Body:   io.NopCloser(bytes.NewReader(c.ReqBody)),
-	}
-	res := &http.Response{
-		Status:     http.StatusText(c.StatusCode),
-		StatusCode: c.StatusCode,
-		Header:     c.ResHeader,
-		Body:       io.NopCloser(bytes.NewReader(c.ResBody)),
+	resb := bytes.NewReader(c.res)
+	res, err := http.ReadResponse(bufio.NewReader(resb), req)
+	if err != nil {
+		return nil, nil, err
 	}
 	return req, res, nil
 }

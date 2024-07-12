@@ -36,8 +36,8 @@ github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38/go.mod h1:kpwsk12EmLe
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
-github.com/k1LoW/httpstub v0.16.4 h1:XM27/PQH/leSthyH/jzMxivAehxUMXVMudah3tDpX74=
-github.com/k1LoW/httpstub v0.16.4/go.mod h1:LJ607j74kHbbtMbkloC9q+0pG3VsJIn8+FwK1jut8Qo=
+github.com/k1LoW/httpstub v0.16.5 h1:PtrOUrYIko6M3nnsKEHtu/bNp8uAh+MrblQ905pnKhA=
+github.com/k1LoW/httpstub v0.16.5/go.mod h1:1vUx0ehYo19Tz8gVaWZ2PWvOPtRyLeQ3ZWYiw5VUmyk=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
@@ -64,8 +64,8 @@ github.com/onsi/gomega v1.10.1/go.mod h1:iN09h71vgCQne3DLsj+A5owkum+a2tYe+TOCB1y
 github.com/onsi/gomega v1.17.0/go.mod h1:HnhC7FXeEQY45zxNK3PPoIUhzk/80Xly9PcubAlGdZY=
 github.com/onsi/gomega v1.19.0 h1:4ieX6qQjPP/BfC3mpsAtIGGlxTWPeA3Inl/7DtXw1tw=
 github.com/onsi/gomega v1.19.0/go.mod h1:LY+I3pBVzYsTBU1AnDwOSxaYi9WoWiqgwooUqq9yPro=
-github.com/pb33f/libopenapi v0.16.7 h1:kgzBpcX+ESF+C/UUlpqd+H4qdWloBfsDJVMgUmbPDts=
-github.com/pb33f/libopenapi v0.16.7/go.mod h1:PEXNwvtT4KNdjrwudp5OYnD1ryqK6uJ68aMNyWvoMuc=
+github.com/pb33f/libopenapi v0.16.8 h1:EceJ+JTHViwjKNyP3LJ8J39jSQ4F2oOvHw6KfWCcVxM=
+github.com/pb33f/libopenapi v0.16.8/go.mod h1:PEXNwvtT4KNdjrwudp5OYnD1ryqK6uJ68aMNyWvoMuc=
 github.com/pb33f/libopenapi-validator v0.0.56 h1:kYO8DRsSRpnxhUExuEfsgARuT/hkc/ISC77CX0BMze4=
 github.com/pb33f/libopenapi-validator v0.0.56/go.mod h1:Cwdf0GUmnUrbw1LBpcGV1Wx5q/LC9akREV4Jc6/yJDc=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
