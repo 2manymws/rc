@@ -58,7 +58,7 @@ func (c *AllCache) Load(req *http.Request) (*http.Request, *http.Response, error
 	if !ok {
 		return nil, nil, rc.ErrCacheNotFound
 	}
-	cachedReq, cachedRes, err := decodeReqRes(cc)
+	cachedReq, cachedRes, err := decodeReqRes(c.t, cc)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -105,7 +105,7 @@ func (c *GetOnlyCache) Load(req *http.Request) (*http.Request, *http.Response, e
 	if !ok {
 		return nil, nil, rc.ErrCacheNotFound
 	}
-	cachedReq, cachedRes, err := decodeReqRes(cc)
+	cachedReq, cachedRes, err := decodeReqRes(c.t, cc)
 	if err != nil {
 		return nil, nil, err
 	}

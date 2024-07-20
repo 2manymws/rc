@@ -5,7 +5,9 @@ package testutil
 import (
 	"bufio"
 	"bytes"
+	"io"
 	"net/http"
+	"testing"
 )
 
 type cachedReqRes struct {
@@ -33,16 +35,44 @@ func encodeReqRes(req *http.Request, res *http.Response) (*cachedReqRes, error) 
 }
 
 // decodeReqRes decodes to http.Request and http.Response.
-func decodeReqRes(c *cachedReqRes) (*http.Request, *http.Response, error) {
+func decodeReqRes(t testing.TB, c *cachedReqRes) (*http.Request, *http.Response, error) {
 	reqb := bytes.NewReader(c.req)
 	req, err := http.ReadRequest(bufio.NewReader(reqb))
 	if err != nil {
 		return nil, nil, err
 	}
+	req.Body = newCloseChecker(t, req.Body)
 	resb := bytes.NewReader(c.res)
 	res, err := http.ReadResponse(bufio.NewReader(resb), req)
 	if err != nil {
 		return nil, nil, err
 	}
+	res.Body = newCloseChecker(t, res.Body)
 	return req, res, nil
+}
+
+type closeChecker struct {
+	rc     io.ReadCloser
+	closed bool
+}
+
+func newCloseChecker(t testing.TB, rc io.ReadCloser) *closeChecker {
+	r := &closeChecker{
+		rc: rc,
+	}
+	t.Cleanup(func() {
+		if !r.closed {
+			t.Errorf("closeChecker: not closed")
+		}
+	})
+	return r
+}
+
+func (r *closeChecker) Read(p []byte) (n int, err error) {
+	return r.rc.Read(p)
+}
+
+func (r *closeChecker) Close() error {
+	r.closed = true
+	return r.rc.Close()
 }
