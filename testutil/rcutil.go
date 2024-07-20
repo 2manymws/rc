@@ -41,38 +41,38 @@ func decodeReqRes(t testing.TB, c *cachedReqRes) (*http.Request, *http.Response,
 	if err != nil {
 		return nil, nil, err
 	}
-	req.Body = NewCloseChecker(t, req.Body)
+	req.Body = newCloseChecker(t, req.Body)
 	resb := bytes.NewReader(c.res)
 	res, err := http.ReadResponse(bufio.NewReader(resb), req)
 	if err != nil {
 		return nil, nil, err
 	}
-	res.Body = NewCloseChecker(t, res.Body)
+	res.Body = newCloseChecker(t, res.Body)
 	return req, res, nil
 }
 
-type CloseChecker struct {
+type closeChecker struct {
 	rc     io.ReadCloser
 	closed bool
 }
 
-func NewCloseChecker(t testing.TB, rc io.ReadCloser) *CloseChecker {
-	r := &CloseChecker{
+func newCloseChecker(t testing.TB, rc io.ReadCloser) *closeChecker {
+	r := &closeChecker{
 		rc: rc,
 	}
 	t.Cleanup(func() {
 		if !r.closed {
-			t.Errorf("CloseChecker: not closed")
+			t.Errorf("closeChecker: not closed")
 		}
 	})
 	return r
 }
 
-func (r *CloseChecker) Read(p []byte) (n int, err error) {
+func (r *closeChecker) Read(p []byte) (n int, err error) {
 	return r.rc.Read(p)
 }
 
-func (r *CloseChecker) Close() error {
+func (r *closeChecker) Close() error {
 	r.closed = true
 	return r.rc.Close()
 }
