@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.12.1](https://github.com/2manymws/rc/compare/v0.12.0...v0.12.1) - 2024-07-20
+### Fix bug 🐛
+- Close cached response / request body by @k1LoW in https://github.com/2manymws/rc/pull/84
+
 ## [v0.12.0](https://github.com/2manymws/rc/compare/v0.11.0...v0.12.0) - 2024-07-12
 ### New Features 🎉
 - Avoid getting request body as much as possible in the handler. by @k1LoW in https://github.com/2manymws/rc/pull/81
