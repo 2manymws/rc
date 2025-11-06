@@ -11,7 +11,7 @@ import (
 	"github.com/k1LoW/httpstub"
 )
 
-// NewHTTPRouter returns a new test HTTP router
+// NewHTTPRouter returns a new test HTTP router.
 func NewHTTPRouter(t *testing.T) *httpstub.Router {
 	r := httpstub.NewRouter(t)
 	count := 0
@@ -20,7 +20,7 @@ func NewHTTPRouter(t *testing.T) *httpstub.Router {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "no-store")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(fmt.Sprintf(`{"count":%d}`, count))) //nostyle:handlerrors
+		_, _ = fmt.Fprintf(w, `{"count":%d}`, count) //nostyle:handlerrors
 	})
 	r.Match(func(r *http.Request) bool { return strings.HasPrefix(r.URL.Path, "/path/to") }).Handler(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -30,7 +30,7 @@ func NewHTTPRouter(t *testing.T) *httpstub.Router {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Cache-Control", "max-age=60")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(fmt.Sprintf(`{"count":%d}`, count))) //nostyle:handlerrors
+		_, _ = fmt.Fprintf(w, `{"count":%d}`, count) //nostyle:handlerrors
 	})
 	return r
 }

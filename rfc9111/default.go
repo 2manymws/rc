@@ -106,5 +106,5 @@ var defaultHeuristicallyCacheableStatusCodes = []int{ //nostyle:varnames
 	http.StatusNotImplemented, // 501 / RFC 9110, 15.6.2
 }
 
-// defaultHeuristicExpirationRatio is the default ratio of the heuristic expiration time ((Date - Last-Modified) * defaultHeuristicExpirationRatio)
+// defaultHeuristicExpirationRatio is the default ratio of the heuristic expiration time ((Date - Last-Modified) * defaultHeuristicExpirationRatio).
 var defaultHeuristicExpirationRatio = 0.1 // 10%

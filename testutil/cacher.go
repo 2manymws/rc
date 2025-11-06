@@ -1,7 +1,7 @@
 package testutil
 
 import (
-	"crypto/sha1"
+	"crypto/sha1" // #nosec G505
 	"encoding/hex"
 	"io"
 	"net/http"
@@ -135,7 +135,7 @@ func (c *GetOnlyCache) Hit() int {
 func reqToKey(req *http.Request) string {
 	const sep = "|"
 	seed := req.Method + sep + req.Host + sep + req.URL.Path + sep + req.URL.RawQuery
-	sha1 := sha1.New()
+	sha1 := sha1.New() // #nosec G401
 	_, _ = io.WriteString(sha1, strings.ToLower(seed)) //nostyle:handlerrors
 	return hex.EncodeToString(sha1.Sum(nil))
 }
