@@ -143,7 +143,11 @@ func (m *cacheMw) Handler(next http.Handler) http.Handler {
 		}
 		w.WriteHeader(res.StatusCode)
 
-		ww := w.(io.Writer)
+		ww, ok := w.(io.Writer)
+		if !ok {
+			m.logger.Error("failed to cast response writer to io.Writer", slog.String("host", reqc.Host), slog.String("method", reqc.Method), slog.String("url", reqc.URL.String()))
+			return
+		}
 		buf := getCopyBuf()
 		defer putCopyBuf(buf)
 		if _, err := io.CopyBuffer(ww, res.Body, buf); err != nil {

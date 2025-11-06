@@ -110,7 +110,11 @@ func TestRC(t *testing.T) {
 				}
 			}
 
-			got := tt.cacher.(testutil.Cacher).Hit()
+			cacher, ok := tt.cacher.(testutil.Cacher)
+			if !ok {
+				t.Fatal("failed to cast cacher to testutil.Cacher")
+			}
+			got := cacher.Hit()
 			if got != tt.wantHit {
 				t.Errorf("got %v want %v", got, tt.wantHit)
 			}

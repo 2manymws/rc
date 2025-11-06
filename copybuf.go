@@ -2,13 +2,14 @@ package rc
 
 import "sync"
 
-// Copy from net/http/server.go
+// Copy from net/http/server.go.
 const copyBufPoolSize = 32 * 1024
 
 var copyBufPool = sync.Pool{New: func() any { return new([copyBufPoolSize]byte) }}
 
 func getCopyBuf() []byte { //nostyle:getters
-	return copyBufPool.Get().(*[copyBufPoolSize]byte)[:]
+	buf := copyBufPool.Get().(*[copyBufPoolSize]byte) //nolint:errcheck
+	return buf[:]
 }
 func putCopyBuf(b []byte) {
 	if len(b) != copyBufPoolSize {
