@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
 
       - name: Set up Go
+        id: setup-go
         uses: actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639 # v4.2.1
         with:
           go-version-file: go.mod
@@ -32,7 +33,7 @@ jobs:
         uses: reviewdog/action-golangci-lint@f9bba13753278f6a73b27a56a3ffb1bfda90ed71 # v2.8.0
         with:
           fail_level: warning
-          go_version_file: go.mod
+          go_version: '${{ steps.setup-go.outputs.go-version }}'
 
       - name: Run gostyle
         uses: k1LoW/gostyle-action@56cc0ed69a96366aa5be08df58a858e306c1518c # v1.5.0
