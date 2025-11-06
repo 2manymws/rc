@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.13.0](https://github.com/2manymws/rc/compare/v0.12.1...v0.13.0) - 2025-11-06
+### New Features 🎉
+- feat: support `stale-while-revalidate` and `stale-if-error` by @k1LoW in https://github.com/2manymws/rc/pull/92
+### Fix bug 🐛
+- fix: correct `max-stale` handling per RFC 9111 by @k1LoW in https://github.com/2manymws/rc/pull/91
+### Other Changes
+- chore: fix ci/lint and bump up go directive version by @k1LoW in https://github.com/2manymws/rc/pull/86
+- chore: pinning by @k1LoW in https://github.com/2manymws/rc/pull/89
+- chore(deps): bump the dependencies group across 1 directory with 3 updates by @dependabot[bot] in https://github.com/2manymws/rc/pull/90
+
 ## [v0.12.1](https://github.com/2manymws/rc/compare/v0.12.0...v0.12.1) - 2024-07-20
 ### Fix bug 🐛
 - Close cached response / request body by @k1LoW in https://github.com/2manymws/rc/pull/84
