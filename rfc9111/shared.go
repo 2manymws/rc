@@ -283,9 +283,9 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 		// stale-while-revalidate: https://www.rfc-editor.org/rfc/rfc5861
 		// Permits serving stale response while revalidating in background
 		if rescc.StaleWhileRevalidate != nil {
-			staleAge := now.Sub(expires)
-			swrWindow := time.Duration(*rescc.StaleWhileRevalidate) * time.Second
-			if staleAge >= 0 && staleAge < swrWindow {
+			age := now.Sub(expires)
+			swr := time.Duration(*rescc.StaleWhileRevalidate) * time.Second
+			if age >= 0 && age < swr {
 				// Within stale-while-revalidate window, use cached response
 				// and trigger background revalidation
 				go func() {
@@ -316,9 +316,9 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 			// stale-if-error: https://www.rfc-editor.org/rfc/rfc5861.txt
 			// Permits serving stale response when error occurs
 			if rescc.StaleIfError != nil {
-				staleAge := now.Sub(expires)
-				sieWindow := time.Duration(*rescc.StaleIfError) * time.Second
-				if staleAge >= 0 && staleAge < sieWindow {
+				age := now.Sub(expires)
+				sie := time.Duration(*rescc.StaleIfError) * time.Second
+				if age >= 0 && age < sie {
 					// Within stale-if-error window, use cached response on error
 					return true, cachedRes, nil
 				}
@@ -330,9 +330,9 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 			res.StatusCode == http.StatusBadGateway ||
 			res.StatusCode == http.StatusServiceUnavailable ||
 			res.StatusCode == http.StatusGatewayTimeout) {
-			staleAge := now.Sub(expires)
-			sieWindow := time.Duration(*rescc.StaleIfError) * time.Second
-			if staleAge >= 0 && staleAge < sieWindow {
+			age := now.Sub(expires)
+			sie := time.Duration(*rescc.StaleIfError) * time.Second
+			if age >= 0 && age < sie {
 				// Within stale-if-error window, use cached response on 5xx error
 				return true, cachedRes, nil
 			}
@@ -348,9 +348,9 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 		// stale-if-error: https://www.rfc-editor.org/rfc/rfc5861
 		// Permits serving stale response when error occurs
 		if rescc.StaleIfError != nil {
-			staleAge := now.Sub(expires)
-			sieWindow := time.Duration(*rescc.StaleIfError) * time.Second
-			if staleAge >= 0 && staleAge < sieWindow {
+			age := now.Sub(expires)
+			sie := time.Duration(*rescc.StaleIfError) * time.Second
+			if age >= 0 && age < sie {
 				// Within stale-if-error window, use cached response on error
 				return true, cachedRes, nil
 			}
@@ -362,9 +362,9 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 		res.StatusCode == http.StatusBadGateway ||
 		res.StatusCode == http.StatusServiceUnavailable ||
 		res.StatusCode == http.StatusGatewayTimeout) {
-		staleAge := now.Sub(expires)
-		sieWindow := time.Duration(*rescc.StaleIfError) * time.Second
-		if staleAge >= 0 && staleAge < sieWindow {
+		age := now.Sub(expires)
+		sie := time.Duration(*rescc.StaleIfError) * time.Second
+		if age >= 0 && age < sie {
 			// Within stale-if-error window, use cached response on 5xx error
 			return true, cachedRes, nil
 		}
