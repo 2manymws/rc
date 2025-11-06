@@ -111,20 +111,20 @@ func NewShared(opts ...SharedOption) (*Shared, error) {
 
 // Storable returns true if the response is storable in the cache.
 func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) (bool, time.Time) {
-	// 3. Storing Responses in Caches (https://httpwg.org/specs/rfc9111.html#rfc.section.3)
+	// 3. Storing Responses in Caches (https://www.rfc-editor.org/rfc/rfc9111#section-3)
 	// - the request method is understood by the cache;
 	if !contains(req.Method, s.understoodMethods) {
 		return s.storableWithExtendedRules(req, res, now)
 	}
 
-	// - the response status code is final (see https://httpwg.org/specs/rfc9110.html#rfc.section.15);
+	// - the response status code is final (see https://www.rfc-editor.org/rfc/rfc9110#section-15);
 	if !isFinalStatusCode(res.StatusCode) {
 		return s.storableWithExtendedRules(req, res, now)
 	}
 
 	rescc := ParseResponseCacheControlHeader(res.Header.Values("Cache-Control"))
 
-	// - if the response status code is 206 or 304, or the must-understand cache directive (see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.3) is present: the cache understands the response status code;
+	// - if the response status code is 206 or 304, or the must-understand cache directive (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.3) is present: the cache understands the response status code;
 	if contains(res.StatusCode, []int{
 		http.StatusPartialContent,
 		http.StatusNotModified,
@@ -132,23 +132,23 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 		return s.storableWithExtendedRules(req, res, now)
 	}
 
-	// - the no-store cache directive is not present in the response (see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.5);
+	// - the no-store cache directive is not present in the response (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.5);
 	if rescc.NoStore {
 		return false, time.Time{}
 	}
 
-	// - if the cache is shared: the private response directive is either not present or allows a shared cache to store a modified response; see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.7);
+	// - if the cache is shared: the private response directive is either not present or allows a shared cache to store a modified response; see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.7);
 	if rescc.Private {
 		return false, time.Time{}
 	}
 
-	// - if the cache is shared: the Authorization header field is not present in the request (see https://httpwg.org/specs/rfc9111.html#rfc.section.11.6.2 of [HTTP]) or a response directive is present that explicitly allows shared caching (see https://httpwg.org/specs/rfc9111.html#rfc.section.3.5);
-	// In this specification, the following response directives have such an effect: must-revalidate (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.2), public (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.9), and s-maxage (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.10).
+	// - if the cache is shared: the Authorization header field is not present in the request (see https://www.rfc-editor.org/rfc/rfc9111#section-11.6.2 of [HTTP]) or a response directive is present that explicitly allows shared caching (see https://www.rfc-editor.org/rfc/rfc9111#section-3.5);
+	// In this specification, the following response directives have such an effect: must-revalidate (https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.2), public (https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.9), and s-maxage (https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.10).
 	if req.Header.Get("Authorization") != "" && !rescc.MustRevalidate && !rescc.Public && rescc.SMaxAge == nil {
 		return false, time.Time{}
 	}
 
-	// In RFC 9111, Servers that wish to control caching of responses with Set-Cookie headers are encouraged to emit appropriate Cache-Control response header fields (see https://httpwg.org/specs/rfc9111.html#rfc.section.7.3).
+	// In RFC 9111, Servers that wish to control caching of responses with Set-Cookie headers are encouraged to emit appropriate Cache-Control response header fields (see https://www.rfc-editor.org/rfc/rfc9111#section-7.3).
 	// But to beat on the safe side, this package does not store responses with Set-Cookie headers by default, similar to NGINX.
 	// THIS IS NOT RFC 9111.
 	if res.Header.Get("Set-Cookie") != "" && !s.storeRequestWithSetCookieHeader {
@@ -165,29 +165,29 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 
 	// - the response contains at least one of the following:
 
-	//   * a public response directive (see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.9);
+	//   * a public response directive (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.9);
 	if rescc.Public {
 		return true, expires
 	}
-	//   * a private response directive, if the cache is not shared (see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.7);
+	//   * a private response directive, if the cache is not shared (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.7);
 	// THE CACHE IS SHARED
 
-	//   * an Expires header field (see https://httpwg.org/specs/rfc9111.html#rfc.section.5.3);
+	//   * an Expires header field (see https://www.rfc-editor.org/rfc/rfc9111#section-5.3);
 	if res.Header.Get("Expires") != "" {
 		return true, expires
 	}
-	//   * a max-age response directive (see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.1);
+	//   * a max-age response directive (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.1);
 	if rescc.MaxAge != nil {
 		return true, expires
 	}
-	//   * if the cache is shared: an s-maxage response directive (see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.10);
+	//   * if the cache is shared: an s-maxage response directive (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.10);
 	if rescc.SMaxAge != nil {
 		return true, expires
 	}
-	//   * a cache extension that allows it to be cached (see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.3); or
+	//   * a cache extension that allows it to be cached (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.3); or
 	// NOT IMPLEMENTED
 
-	//   * a status code that is defined as heuristically cacheable (see https://httpwg.org/specs/rfc9111.html#rfc.section.4.2.2).
+	//   * a status code that is defined as heuristically cacheable (see https://www.rfc-editor.org/rfc/rfc9111#section-4.2.2).
 	if contains(res.StatusCode, s.heuristicallyCacheableStatusCodes) {
 		return true, expires
 	}
@@ -197,7 +197,7 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 
 func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *http.Response, do func(*http.Request) (*http.Response, error), now time.Time) (useCached bool, r *http.Response, _ error) {
 	defer func() {
-		// 5.1 Age (https://httpwg.org/specs/rfc9111.html#rfc.section.5.1)
+		// 5.1 Age (https://www.rfc-editor.org/rfc/rfc9111#section-5.1)
 		if r != nil {
 			setAgeHeader(useCached, r.Header, now)
 		}
@@ -211,7 +211,7 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 	// 4. Constructing Responses from Caches
 	// When presented with a request, a cache MUST NOT reuse a stored response unless:
 
-	// - the presented target URI (https://httpwg.org/specs/rfc9110.html#rfc.section.7.1 of [HTTP]) and that of the stored response match, and
+	// - the presented target URI (https://www.rfc-editor.org/rfc/rfc9110#section-7.1 of [HTTP]) and that of the stored response match, and
 	if cachedReq.Host == "" || req.Host != cachedReq.Host || req.URL.Path != cachedReq.URL.Path || req.URL.RawQuery != cachedReq.URL.RawQuery {
 		// For SNI compatibility, also compare req.Host
 		res, err := do(req)
@@ -224,7 +224,7 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 		return false, res, err
 	}
 
-	// - request header fields nominated by the stored response (if any) match those presented (see https://httpwg.org/specs/rfc9111.html#rfc.section.4.1)
+	// - request header fields nominated by the stored response (if any) match those presented (see https://www.rfc-editor.org/rfc/rfc9111#section-4.1)
 	if v := cachedRes.Header.Values("Vary"); len(v) != 0 {
 		vary := strings.Join(v, ",")
 		if strings.Contains(vary, "*") {
@@ -242,9 +242,9 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 
 	rescc := ParseResponseCacheControlHeader(cachedRes.Header.Values("Cache-Control"))
 
-	// - the stored response does not contain the no-cache directive (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.4), unless it is successfully validated (https://httpwg.org/specs/rfc9111.html#rfc.section.4.3)
+	// - the stored response does not contain the no-cache directive (https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.4), unless it is successfully validated (https://www.rfc-editor.org/rfc/rfc9111#section-4.3)
 	if rescc.NoCache {
-		// The no-cache response directive, in its unqualified form (without an argument), indicates that the response MUST NOT be used to satisfy any other request without forwarding it for validation and receiving a successful response; see https://httpwg.org/specs/rfc9111.html#rfc.section.4.3.
+		// The no-cache response directive, in its unqualified form (without an argument), indicates that the response MUST NOT be used to satisfy any other request without forwarding it for validation and receiving a successful response; see https://www.rfc-editor.org/rfc/rfc9111#section-4.3.
 		if req.Method == http.MethodGet || req.Method == http.MethodHead {
 			if cachedRes.Header.Get("ETag") != "" {
 				req.Header.Set("If-None-Match", cachedRes.Header.Get("ETag"))
@@ -269,16 +269,16 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 	expires := CalclateExpires(rescc, cachedRes.Header, s.heuristicExpirationRatio, now)
 
 	// - the stored response is one of the following:
-	//   * fresh (see https://httpwg.org/specs/rfc9111.html#rfc.section.4.2), or
+	//   * fresh (see https://www.rfc-editor.org/rfc/rfc9111#section-4.2), or
 	if expires.Sub(now) > 0 {
 		return true, cachedRes, nil
 	}
 
-	//   * allowed to be served stale (see https://httpwg.org/specs/rfc9111.html#rfc.section.4.2.4), or
+	//   * allowed to be served stale (see https://www.rfc-editor.org/rfc/rfc9111#section-4.2.4), or
 	if !rescc.NoCache && !rescc.MustRevalidate && rescc.SMaxAge == nil && !rescc.ProxyRevalidate {
-		//     > A cache MUST NOT generate a stale response if it is prohibited by an explicit in-protocol directive (e.g., by a no-cache response directive, a must-revalidate response directive, or an applicable s-maxage or proxy-revalidate response directive; see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2).
+		//     > A cache MUST NOT generate a stale response if it is prohibited by an explicit in-protocol directive (e.g., by a no-cache response directive, a must-revalidate response directive, or an applicable s-maxage or proxy-revalidate response directive; see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2).
 		reqcc := ParseRequestCacheControlHeader(req.Header.Values("Cache-Control"))
-		//     > A cache MUST NOT generate a stale response unless it is disconnected or doing so is explicitly permitted by the client or origin server (e.g., by the max-stale request directive in https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1, extension directives such as those defined in [RFC5861], or configuration in accordance with an out-of-band contract).
+		//     > A cache MUST NOT generate a stale response unless it is disconnected or doing so is explicitly permitted by the client or origin server (e.g., by the max-stale request directive in https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1, extension directives such as those defined in [RFC5861], or configuration in accordance with an out-of-band contract).
 
 		// stale-while-revalidate: https://www.rfc-editor.org/rfc/rfc5861
 		// Permits serving stale response while revalidating in background
@@ -303,7 +303,7 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 		}
 	}
 
-	//   * successfully validated (see https://httpwg.org/specs/rfc9111.html#rfc.section.4.3).
+	//   * successfully validated (see https://www.rfc-editor.org/rfc/rfc9111#section-4.3).
 	if req.Method == http.MethodGet || req.Method == http.MethodHead {
 		if cachedRes.Header.Get("ETag") != "" {
 			req.Header.Set("If-None-Match", cachedRes.Header.Get("ETag"))
@@ -313,7 +313,7 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 		}
 		res, err := do(req)
 		if err != nil {
-			// stale-if-error: https://www.rfc-editor.org/rfc/rfc5861.txt
+			// stale-if-error: https://www.rfc-editor.org/rfc/rfc5861
 			// Permits serving stale response when error occurs
 			if rescc.StaleIfError != nil {
 				age := now.Sub(expires)
@@ -395,29 +395,29 @@ func CalclateExpires(d *ResponseDirectives, resHeader http.Header, heuristicExpi
 	// 	4.2.1. Calculating Freshness Lifetime
 	// A cache can calculate the freshness lifetime (denoted as freshness_lifetime) of a response by evaluating the following rules and using the first match:
 
-	// - If the cache is shared and the s-maxage response directive (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.10) is present, use its value
+	// - If the cache is shared and the s-maxage response directive (https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.10) is present, use its value
 	if d.SMaxAge != nil {
 		od := originDate(resHeader, now)
 		return od.Add(time.Duration(*d.SMaxAge) * time.Second)
 	}
-	// - If the max-age response directive (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.1) is present, use its value
+	// - If the max-age response directive (https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.1) is present, use its value
 	if d.MaxAge != nil {
 		od := originDate(resHeader, now)
 		return od.Add(time.Duration(*d.MaxAge) * time.Second)
 	}
 	if resHeader.Get("Expires") != "" {
-		// - If the Expires response header field (https://httpwg.org/specs/rfc9111.html#rfc.section.5.3) is present, use its value minus the value of the Date response header field (using the time the message was received if it is not present, as per Section 6.6.1 of [HTTP])
+		// - If the Expires response header field (https://www.rfc-editor.org/rfc/rfc9111#section-5.3) is present, use its value minus the value of the Date response header field (using the time the message was received if it is not present, as per Section 6.6.1 of [HTTP])
 		et, err := http.ParseTime(resHeader.Get("Expires"))
 		if err == nil {
 			od := originDate(resHeader, now)
 			return now.Add(et.Sub(od))
 		}
 	}
-	// Otherwise, no explicit expiration time is present in the response. A heuristic freshness lifetime might be applicable; see https://httpwg.org/specs/rfc9111.html#rfc.section.4.2.2.
+	// Otherwise, no explicit expiration time is present in the response. A heuristic freshness lifetime might be applicable; see https://www.rfc-editor.org/rfc/rfc9111#section-4.2.2.
 	if resHeader.Get("Last-Modified") != "" {
 		lt, err := http.ParseTime(resHeader.Get("Last-Modified"))
 		if err == nil {
-			// If the response has a Last-Modified header field (https://httpwg.org/specs/rfc9110.html#rfc.section.8.8.2 of [HTTP]), caches are encouraged to use a heuristic expiration value that is no more than some fraction of the interval since that time. A typical setting of this fraction might be 10%.
+			// If the response has a Last-Modified header field (https://www.rfc-editor.org/rfc/rfc9110#section-8.8.2 of [HTTP]), caches are encouraged to use a heuristic expiration value that is no more than some fraction of the interval since that time. A typical setting of this fraction might be 10%.
 			od := originDate(resHeader, now)
 			return od.Add(time.Duration(float64(od.Sub(lt)) * heuristicExpirationRatio))
 		}
@@ -441,10 +441,10 @@ func originDate(resHeader http.Header, now time.Time) time.Time {
 			return t
 		}
 	}
-	// A recipient with a clock that receives a response with an invalid Date header field value MAY replace that value with the time that response was received. (https://httpwg.org/specs/rfc9110.html#rfc.section.6.6.1 of [HTTP])
+	// A recipient with a clock that receives a response with an invalid Date header field value MAY replace that value with the time that response was received. (https://www.rfc-editor.org/rfc/rfc9110#section-6.6.1 of [HTTP])
 	//
-	// ...using the time the message was received if it is not present, as per https://httpwg.org/specs/rfc9110.html#rfc.section.6.6.1 of [HTTP]
-	// (https://httpwg.org/specs/rfc9111.html#rfc.section.4.2.1)
+	// ...using the time the message was received if it is not present, as per https://www.rfc-editor.org/rfc/rfc9110#section-6.6.1 of [HTTP]
+	// (https://www.rfc-editor.org/rfc/rfc9111#section-4.2.1)
 	return now
 }
 
