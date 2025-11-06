@@ -32,7 +32,7 @@ jobs:
         uses: reviewdog/action-golangci-lint@v2
         with:
           fail_level: warning
-          go_version-file: go.mod
+          go_version_file: go.mod
 
       - name: Run gostyle
         uses: k1LoW/gostyle-action@v1
