@@ -279,12 +279,10 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 		//     > A cache MUST NOT generate a stale response if it is prohibited by an explicit in-protocol directive (e.g., by a no-cache response directive, a must-revalidate response directive, or an applicable s-maxage or proxy-revalidate response directive; see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2).
 		reqcc := ParseRequestCacheControlHeader(req.Header.Values("Cache-Control"))
 		//     > A cache MUST NOT generate a stale response unless it is disconnected or doing so is explicitly permitted by the client or origin server (e.g., by the max-stale request directive in https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1, extension directives such as those defined in [RFC5861], or configuration in accordance with an out-of-band contract).
-		if reqcc.MaxStale == nil {
-			// If no value is assigned to max-stale, then the client will accept a stale response of any age (ref https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.2).
-			return true, cachedRes, nil
-		}
-		if expires.Add(time.Duration(*reqcc.MaxStale)*time.Second).Sub(now) > 0 {
-			return true, cachedRes, nil
+		if reqcc.MaxStale != nil {
+			if expires.Add(time.Duration(*reqcc.MaxStale)*time.Second).Sub(now) > 0 {
+				return true, cachedRes, nil
+			}
 		}
 	}
 

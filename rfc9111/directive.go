@@ -1,6 +1,7 @@
 package rfc9111
 
 import (
+	"math"
 	"strconv"
 	"strings"
 )
@@ -70,6 +71,10 @@ func ParseRequestCacheControlHeader(headers []string) *RequestDirectives {
 				}
 				u32 := uint32(u64)
 				d.MaxStale = &u32
+			case strings.HasPrefix(t, "max-stale") && d.MaxStale == nil:
+				// If no value is assigned to max-stale, then the client will accept a stale response of any age (ref https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.2).
+				max := uint32(math.MaxUint32)
+				d.MaxStale = &max
 			case strings.HasPrefix(t, "min-fresh=") && d.MinFresh == nil:
 				sec := strings.TrimPrefix(t, "min-fresh=")
 				u64, err := strconv.ParseUint(sec, 10, 32)
