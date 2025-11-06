@@ -600,11 +600,12 @@ func TestShared_Handle(t *testing.T) {
 			},
 		},
 		{
-			"Use stale cached response",
+			"Validate and use origin response (stale without max-stale)",
 			&http.Request{
 				Host:   endpoint.Host,
 				URL:    endpoint,
 				Method: http.MethodGet,
+				Header: http.Header{},
 			},
 			&http.Request{
 				Host:   endpoint.Host,
@@ -620,15 +621,10 @@ func TestShared_Handle(t *testing.T) {
 				},
 			},
 			do200,
-			true,
+			false,
 			&http.Response{
 				StatusCode: http.StatusOK,
-				Header: http.Header{
-					"Age":           []string{"30"},
-					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
-					"Date":          []string{before30sec.Format(http.TimeFormat)},
-					"Cache-Control": []string{"max-age=20"},
-				},
+				Header:     http.Header{},
 			},
 		},
 		{
@@ -687,6 +683,41 @@ func TestShared_Handle(t *testing.T) {
 					"Age":           []string{"30"},
 					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
 					"Date":          []string{before30sec.Format(http.TimeFormat)},
+				},
+			},
+		},
+		{
+			"Use stale cached response (Cache-Control: max-stale without value)",
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+				Header: http.Header{
+					"Cache-Control": []string{"max-stale"},
+				},
+			},
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20"},
+				},
+			},
+			do200,
+			true,
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Age":           []string{"30"},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20"},
 				},
 			},
 		},
