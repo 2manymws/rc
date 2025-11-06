@@ -279,6 +279,23 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 		//     > A cache MUST NOT generate a stale response if it is prohibited by an explicit in-protocol directive (e.g., by a no-cache response directive, a must-revalidate response directive, or an applicable s-maxage or proxy-revalidate response directive; see https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2).
 		reqcc := ParseRequestCacheControlHeader(req.Header.Values("Cache-Control"))
 		//     > A cache MUST NOT generate a stale response unless it is disconnected or doing so is explicitly permitted by the client or origin server (e.g., by the max-stale request directive in https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1, extension directives such as those defined in [RFC5861], or configuration in accordance with an out-of-band contract).
+
+		// stale-while-revalidate: https://www.rfc-editor.org/rfc/rfc5861
+		// Permits serving stale response while revalidating in background
+		if rescc.StaleWhileRevalidate != nil {
+			staleAge := now.Sub(expires)
+			swrWindow := time.Duration(*rescc.StaleWhileRevalidate) * time.Second
+			if staleAge >= 0 && staleAge < swrWindow {
+				// Within stale-while-revalidate window, use cached response
+				// and trigger background revalidation
+				go func() {
+					// Background revalidation: do() will fetch from origin and update cache
+					_, _ = do(req) //nostyle:handlerrors
+				}()
+				return true, cachedRes, nil
+			}
+		}
+
 		if reqcc.MaxStale != nil {
 			if expires.Add(time.Duration(*reqcc.MaxStale)*time.Second).Sub(now) > 0 {
 				return true, cachedRes, nil
@@ -296,7 +313,29 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 		}
 		res, err := do(req)
 		if err != nil {
+			// stale-if-error: https://www.rfc-editor.org/rfc/rfc5861.txt
+			// Permits serving stale response when error occurs
+			if rescc.StaleIfError != nil {
+				staleAge := now.Sub(expires)
+				sieWindow := time.Duration(*rescc.StaleIfError) * time.Second
+				if staleAge >= 0 && staleAge < sieWindow {
+					// Within stale-if-error window, use cached response on error
+					return true, cachedRes, nil
+				}
+			}
 			return false, res, err
+		}
+		// stale-if-error also applies to 5xx errors (500, 502, 503, 504)
+		if rescc.StaleIfError != nil && (res.StatusCode == http.StatusInternalServerError ||
+			res.StatusCode == http.StatusBadGateway ||
+			res.StatusCode == http.StatusServiceUnavailable ||
+			res.StatusCode == http.StatusGatewayTimeout) {
+			staleAge := now.Sub(expires)
+			sieWindow := time.Duration(*rescc.StaleIfError) * time.Second
+			if staleAge >= 0 && staleAge < sieWindow {
+				// Within stale-if-error window, use cached response on 5xx error
+				return true, cachedRes, nil
+			}
 		}
 		if res.StatusCode == http.StatusNotModified {
 			return true, cachedRes, nil
@@ -305,6 +344,31 @@ func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *h
 	}
 
 	res, err := do(req)
+	if err != nil {
+		// stale-if-error: https://www.rfc-editor.org/rfc/rfc5861
+		// Permits serving stale response when error occurs
+		if rescc.StaleIfError != nil {
+			staleAge := now.Sub(expires)
+			sieWindow := time.Duration(*rescc.StaleIfError) * time.Second
+			if staleAge >= 0 && staleAge < sieWindow {
+				// Within stale-if-error window, use cached response on error
+				return true, cachedRes, nil
+			}
+		}
+		return false, res, err
+	}
+	// stale-if-error also applies to 5xx errors (500, 502, 503, 504)
+	if rescc.StaleIfError != nil && (res.StatusCode == http.StatusInternalServerError ||
+		res.StatusCode == http.StatusBadGateway ||
+		res.StatusCode == http.StatusServiceUnavailable ||
+		res.StatusCode == http.StatusGatewayTimeout) {
+		staleAge := now.Sub(expires)
+		sieWindow := time.Duration(*rescc.StaleIfError) * time.Second
+		if staleAge >= 0 && staleAge < sieWindow {
+			// Within stale-if-error window, use cached response on 5xx error
+			return true, cachedRes, nil
+		}
+	}
 	return false, res, err
 }
 

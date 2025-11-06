@@ -477,6 +477,21 @@ func TestShared_Handle(t *testing.T) {
 			Header:     http.Header{},
 		}, nil
 	}
+	do500 := func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusInternalServerError,
+			Header:     http.Header{},
+		}, nil
+	}
+	do503 := func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusServiceUnavailable,
+			Header:     http.Header{},
+		}, nil
+	}
+	doError := func(req *http.Request) (*http.Response, error) {
+		return nil, http.ErrHandlerTimeout
+	}
 	tests := []struct {
 		name          string
 		req           *http.Request
@@ -934,6 +949,233 @@ func TestShared_Handle(t *testing.T) {
 					"Date":          []string{before30sec.Format(http.TimeFormat)},
 					"Cache-Control": []string{"must-revalidate"},
 				},
+			},
+		},
+		{
+			"Use stale cached response (stale-while-revalidate within window)",
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+			},
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20, stale-while-revalidate=30"},
+				},
+			},
+			do200,
+			true,
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Age":           []string{"30"},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20, stale-while-revalidate=30"},
+				},
+			},
+		},
+		{
+			"Use origin response with 200 (stale-while-revalidate outside window)",
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+				Header: http.Header{},
+			},
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20, stale-while-revalidate=5"},
+				},
+			},
+			do200,
+			false,
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{},
+			},
+		},
+		{
+			"Validate and use cached response with 304 (stale-while-revalidate outside window)",
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+				Header: http.Header{},
+			},
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20, stale-while-revalidate=5"},
+				},
+			},
+			do304,
+			true,
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Age":           []string{"30"},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20, stale-while-revalidate=5"},
+				},
+			},
+		},
+		{
+			"Use stale cached response (stale-if-error on 500 error)",
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+				Header: http.Header{},
+			},
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"ETag":          []string{`"abc123"`},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20, stale-if-error=60, must-revalidate"},
+				},
+			},
+			do500,
+			true,
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Age":           []string{"30"},
+					"ETag":          []string{`"abc123"`},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20, stale-if-error=60, must-revalidate"},
+				},
+			},
+		},
+		{
+			"Use stale cached response (stale-if-error on 503 error)",
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+				Header: http.Header{},
+			},
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"ETag":          []string{`"abc123"`},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20, stale-if-error=60, must-revalidate"},
+				},
+			},
+			do503,
+			true,
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Age":           []string{"30"},
+					"ETag":          []string{`"abc123"`},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20, stale-if-error=60, must-revalidate"},
+				},
+			},
+		},
+		{
+			"Use stale cached response (stale-if-error on request error)",
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+				Header: http.Header{},
+			},
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"ETag":          []string{`"abc123"`},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20, stale-if-error=60, must-revalidate"},
+				},
+			},
+			doError,
+			true,
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Age":           []string{"30"},
+					"ETag":          []string{`"abc123"`},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20, stale-if-error=60, must-revalidate"},
+				},
+			},
+		},
+		{
+			"Use 500 response (stale-if-error outside window)",
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+				Header: http.Header{},
+			},
+			&http.Request{
+				Host:   endpoint.Host,
+				URL:    endpoint,
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"ETag":          []string{`"abc123"`},
+					"Last-Modified": []string{before30sec.Format(http.TimeFormat)},
+					"Date":          []string{before30sec.Format(http.TimeFormat)},
+					"Cache-Control": []string{"max-age=20, stale-if-error=5, must-revalidate"},
+				},
+			},
+			do500,
+			false,
+			&http.Response{
+				StatusCode: http.StatusInternalServerError,
+				Header:     http.Header{},
 			},
 		},
 	}

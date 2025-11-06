@@ -44,6 +44,10 @@ type ResponseDirectives struct {
 	Public bool
 	// s-maxag https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.10.
 	SMaxAge *uint32
+	// stale-while-revalidate https://www.rfc-editor.org/rfc/rfc9111#section-4.2.4 https://www.rfc-editor.org/rfc/rfc5861
+	StaleWhileRevalidate *uint32
+	// stale-if-error https://www.rfc-editor.org/rfc/rfc9111#section-4.2.4 https://www.rfc-editor.org/rfc/rfc5861
+	StaleIfError *uint32
 }
 
 // ParseRequestCacheControlHeader parses the Cache-Control header of a request.
@@ -140,6 +144,22 @@ func ParseResponseCacheControlHeader(headers []string) *ResponseDirectives {
 				}
 				u32 := uint32(u64)
 				d.SMaxAge = &u32
+			case strings.HasPrefix(t, "stale-while-revalidate=") && d.StaleWhileRevalidate == nil:
+				sec := strings.TrimPrefix(t, "stale-while-revalidate=")
+				u64, err := strconv.ParseUint(sec, 10, 32)
+				if err != nil {
+					continue
+				}
+				u32 := uint32(u64)
+				d.StaleWhileRevalidate = &u32
+			case strings.HasPrefix(t, "stale-if-error=") && d.StaleIfError == nil:
+				sec := strings.TrimPrefix(t, "stale-if-error=")
+				u64, err := strconv.ParseUint(sec, 10, 32)
+				if err != nil {
+					continue
+				}
+				u32 := uint32(u64)
+				d.StaleIfError = &u32
 			default:
 				// A cache MUST ignore unrecognized cache directives. (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.3)
 			}
