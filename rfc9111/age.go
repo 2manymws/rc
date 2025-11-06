@@ -9,7 +9,7 @@ import (
 func setAgeHeader(useCached bool, resHeader http.Header, now time.Time) {
 	// 4.2.3. Calculating Age
 	if !useCached {
-		// The presence of an Age header field implies that the response was not generated or validated by the origin server for this request. However, lack of an Age header field does not imply the origin was contacted (https://httpwg.org/specs/rfc9111.html#rfc.section.5.1).
+		// The presence of an Age header field implies that the response was not generated or validated by the origin server for this request. However, lack of an Age header field does not imply the origin was contacted (https://www.rfc-editor.org/rfc/rfc9111#section-5.1).
 		return
 	}
 	// The following is straight code with the expectation that it will be optimized by the compiler

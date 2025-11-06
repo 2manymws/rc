@@ -7,42 +7,42 @@ import (
 )
 
 type RequestDirectives struct {
-	// max-age https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.1.
+	// max-age https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.1
 	MaxAge *uint32
-	// max-stale https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.2.
+	// max-stale https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.2
 	MaxStale *uint32
-	// min-fresh https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.3.
+	// min-fresh https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.3
 	MinFresh *uint32
-	// no-cache https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.4.
+	// no-cache https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.4
 	NoCache bool
-	// no-store https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.5.
+	// no-store https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.5
 	NoStore bool
-	// no-transform https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.6.
+	// no-transform https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.6
 	NoTransform bool
-	// only-if-cached https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.7.
+	// only-if-cached https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.7
 	OnlyIfCached bool
 }
 
 type ResponseDirectives struct {
-	// max-age https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.1.
+	// max-age https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.1
 	MaxAge *uint32
-	// must-revalidate https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.2.
+	// must-revalidate https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.2
 	MustRevalidate bool
-	// must-understand https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.3.
+	// must-understand https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.3
 	MustUnderstand bool
-	// no-cache https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.4.
+	// no-cache https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.4
 	NoCache bool
-	// no-store https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.5.
+	// no-store https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.5
 	NoStore bool
-	// no-transform https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.6.
+	// no-transform https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.6
 	NoTransform bool
-	// private https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.7.
+	// private https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.7
 	Private bool
-	// proxy-revalidate https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.8.
+	// proxy-revalidate https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.8
 	ProxyRevalidate bool
-	// public https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.9.
+	// public https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.9
 	Public bool
-	// s-maxag https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.2.10.
+	// s-maxag https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.10
 	SMaxAge *uint32
 	// stale-while-revalidate https://www.rfc-editor.org/rfc/rfc9111#section-4.2.4 https://www.rfc-editor.org/rfc/rfc5861
 	StaleWhileRevalidate *uint32
@@ -76,7 +76,7 @@ func ParseRequestCacheControlHeader(headers []string) *RequestDirectives {
 				u32 := uint32(u64)
 				d.MaxStale = &u32
 			case strings.HasPrefix(t, "max-stale") && d.MaxStale == nil:
-				// If no value is assigned to max-stale, then the client will accept a stale response of any age (ref https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.1.2).
+				// If no value is assigned to max-stale, then the client will accept a stale response of any age (ref https://www.rfc-editor.org/rfc/rfc9111#section-5.2.1.2).
 				max := uint32(math.MaxUint32)
 				d.MaxStale = &max
 			case strings.HasPrefix(t, "min-fresh=") && d.MinFresh == nil:
@@ -96,7 +96,7 @@ func ParseRequestCacheControlHeader(headers []string) *RequestDirectives {
 			case t == "only-if-cached":
 				d.OnlyIfCached = true
 			default:
-				// A cache MUST ignore unrecognized cache directives. (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.3)
+				// A cache MUST ignore unrecognized cache directives. (https://www.rfc-editor.org/rfc/rfc9111#section-5.2.3)
 			}
 		}
 	}
@@ -161,7 +161,7 @@ func ParseResponseCacheControlHeader(headers []string) *ResponseDirectives {
 				u32 := uint32(u64)
 				d.StaleIfError = &u32
 			default:
-				// A cache MUST ignore unrecognized cache directives. (https://httpwg.org/specs/rfc9111.html#rfc.section.5.2.3)
+				// A cache MUST ignore unrecognized cache directives. (https://www.rfc-editor.org/rfc/rfc9111#section-5.2.3)
 			}
 		}
 	}
