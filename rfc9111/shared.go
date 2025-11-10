@@ -125,10 +125,9 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 	rescc := ParseResponseCacheControlHeader(res.Header.Values("Cache-Control"))
 
 	// - if the response status code is 206 or 304, or the must-understand cache directive (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.3) is present: the cache understands the response status code;
-	if contains(res.StatusCode, []int{
-		http.StatusPartialContent,
-		http.StatusNotModified,
-	}) || (rescc.MustUnderstand && !contains(res.StatusCode, s.understoodStatusCodes)) {
+	if (contains(res.StatusCode, []int{http.StatusPartialContent, http.StatusNotModified}) &&
+		!contains(res.StatusCode, s.understoodStatusCodes)) ||
+		(rescc.MustUnderstand && !contains(res.StatusCode, s.understoodStatusCodes)) {
 		return s.storableWithExtendedRules(req, res, now)
 	}
 
