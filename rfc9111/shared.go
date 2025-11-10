@@ -158,36 +158,36 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 
 	//   * a public response directive (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.9);
 	if rescc.Public {
-		expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
-		return true, expires
+		exp := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
+		return true, exp
 	}
 	//   * a private response directive, if the cache is not shared (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.7);
 	// THE CACHE IS SHARED
 
 	//   * an Expires header field (see https://www.rfc-editor.org/rfc/rfc9111#section-5.3);
 	if res.Header.Get("Expires") != "" {
-		expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
-		return true, expires
+		exp := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
+		return true, exp
 	}
 	//   * a max-age response directive (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.1);
 	if rescc.MaxAge != nil {
-		expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
-		return true, expires
+		exp := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
+		return true, exp
 	}
 	//   * if the cache is shared: an s-maxage response directive (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.10);
 	if rescc.SMaxAge != nil {
-		expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
-		return true, expires
+		exp := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
+		return true, exp
 	}
 	//   * a cache extension that allows it to be cached (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.3); or
 	// NOT IMPLEMENTED
 
 	//   * a status code that is defined as heuristically cacheable (see https://www.rfc-editor.org/rfc/rfc9111#section-4.2.2).
 	if contains(res.StatusCode, s.heuristicallyCacheableStatusCodes) {
-		expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
+		exp := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
 		// Only store if we can calculate an expiration time
-		if expires.Sub(time.Time{}) != 0 {
-			return true, expires
+		if exp.Sub(time.Time{}) != 0 {
+			return true, exp
 		}
 	}
 

@@ -25,9 +25,9 @@ lint:
 	git restore go.*
 
 depsdev:
-	go install github.com/Songmu/ghch/cmd/ghch@latest
 	go install github.com/Songmu/gocredits/cmd/gocredits@latest
 	go install github.com/k1LoW/octocov-go-test-bench/cmd/octocov-go-test-bench@latest
+	go install github.com/k1LoW/gostyle@latest
 	go install github.com/k1LoW/octocov-cachegrind/cmd/octocov-cachegrind@latest
 
 prerelease:
