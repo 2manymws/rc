@@ -154,18 +154,11 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 		return false, time.Time{}
 	}
 
-	expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
-	if expires.Sub(now) <= 0 {
-		if expires.Sub(time.Time{}) == 0 {
-			return s.storableWithExtendedRules(req, res, now)
-		}
-		return false, time.Time{}
-	}
-
 	// - the response contains at least one of the following:
 
 	//   * a public response directive (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.9);
 	if rescc.Public {
+		expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
 		return true, expires
 	}
 	//   * a private response directive, if the cache is not shared (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.7);
@@ -173,14 +166,17 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 
 	//   * an Expires header field (see https://www.rfc-editor.org/rfc/rfc9111#section-5.3);
 	if res.Header.Get("Expires") != "" {
+		expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
 		return true, expires
 	}
 	//   * a max-age response directive (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.1);
 	if rescc.MaxAge != nil {
+		expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
 		return true, expires
 	}
 	//   * if the cache is shared: an s-maxage response directive (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.10);
 	if rescc.SMaxAge != nil {
+		expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
 		return true, expires
 	}
 	//   * a cache extension that allows it to be cached (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.3); or
@@ -188,10 +184,14 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 
 	//   * a status code that is defined as heuristically cacheable (see https://www.rfc-editor.org/rfc/rfc9111#section-4.2.2).
 	if contains(res.StatusCode, s.heuristicallyCacheableStatusCodes) {
-		return true, expires
+		expires := CalclateExpires(rescc, res.Header, s.heuristicExpirationRatio, now)
+		// Only store if we can calculate an expiration time
+		if expires.Sub(time.Time{}) != 0 {
+			return true, expires
+		}
 	}
 
-	return false, time.Time{}
+	return s.storableWithExtendedRules(req, res, now)
 }
 
 func (s *Shared) Handle(req *http.Request, cachedReq *http.Request, cachedRes *http.Response, do func(*http.Request) (*http.Response, error), now time.Time) (useCached bool, r *http.Response, _ error) {
