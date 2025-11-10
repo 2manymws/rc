@@ -154,7 +154,7 @@ func TestShared_Storable(t *testing.T) {
 			time.Time{},
 		},
 		{
-			"GET 200 -> No Store",
+			"GET 200 (no cache control, no Last-Modified) -> No Store",
 			&http.Request{
 				Host:   "example.com",
 				Method: http.MethodGet,
@@ -284,7 +284,7 @@ func TestShared_Storable(t *testing.T) {
 			time.Time{},
 		},
 		{
-			"GET 200 Cache-Control: public (only) -> No Store",
+			"GET 200 Cache-Control: public (only) -> Store (but expires unknown)",
 			&http.Request{
 				Host:   "example.com",
 				Method: http.MethodGet,
@@ -296,7 +296,7 @@ func TestShared_Storable(t *testing.T) {
 				},
 			},
 			nil,
-			false,
+			true,
 			time.Time{},
 		},
 		{
@@ -424,6 +424,73 @@ func TestShared_Storable(t *testing.T) {
 			},
 			true,
 			time.Date(2024, 12, 13, 14, 15, 31, 00, time.UTC),
+		},
+		{
+			"GET 200 Cache-Control: max-age=10, Date: 2024-12-13 14:15:00 (already stale) -> Store with past expires",
+			&http.Request{
+				Host:   "example.com",
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Cache-Control": []string{"max-age=10"},
+					"Date":          []string{"Mon, 13 Dec 2024 14:15:00 GMT"},
+				},
+			},
+			nil,
+			true,
+			time.Date(2024, 12, 13, 14, 15, 10, 00, time.UTC),
+		},
+		{
+			"GET 200 Expires: 2024-12-13 14:15:00 (already past) -> Store with past expires",
+			&http.Request{
+				Host:   "example.com",
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Expires": []string{"Mon, 13 Dec 2024 14:15:00 GMT"},
+				},
+			},
+			nil,
+			true,
+			time.Date(2024, 12, 13, 14, 15, 00, 00, time.UTC),
+		},
+		{
+			"GET 200 Cache-Control: s-maxage=5, Date: 2024-12-13 14:15:00 (already stale) -> Store with past expires",
+			&http.Request{
+				Host:   "example.com",
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Cache-Control": []string{"s-maxage=5"},
+					"Date":          []string{"Mon, 13 Dec 2024 14:15:00 GMT"},
+				},
+			},
+			nil,
+			true,
+			time.Date(2024, 12, 13, 14, 15, 05, 00, time.UTC),
+		},
+		{
+			"GET 200 Cache-Control: public, Last-Modified: 2024-12-13 14:15:00 (already stale by heuristic) -> Store with past expires",
+			&http.Request{
+				Host:   "example.com",
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Cache-Control": []string{"public"},
+					"Last-Modified": []string{"Mon, 13 Dec 2024 14:15:00 GMT"},
+				},
+			},
+			nil,
+			true,
+			time.Date(2024, 12, 13, 14, 15, 17, 600000000, time.UTC),
 		},
 	}
 	for _, tt := range tests {
