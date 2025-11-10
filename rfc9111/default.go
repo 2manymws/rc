@@ -27,10 +27,17 @@ var defaultUnderstoodStatusCodes = []int{
 	http.StatusNonAuthoritativeInfo, // 203 / RFC 9110, 15.3.4
 	http.StatusNoContent,            // 204 / RFC 9110, 15.3.5
 	http.StatusResetContent,         // 205 / RFC 9110, 15.3.6
-	http.StatusPartialContent,       // 206 / RFC 9110, 15.3.7
-	http.StatusMultiStatus,          // 207 / RFC 4918, 11.1
-	http.StatusAlreadyReported,      // 208 / RFC 5842, 7.1
-	http.StatusIMUsed,               // 226 / RFC 3229, 10.4.1
+	// http.StatusPartialContent,       // 206 / RFC 9110, 15.3.7
+	// 206 is excluded from understood status codes by default because:
+	// - 206 responses are for Range requests and contain only partial content
+	// - Caching 206 without proper Range-aware cache key management can cause incorrect cache hits
+	//   (e.g., a cached 206 response for bytes 0-1023 might be returned for a request wanting the full resource)
+	// - This implementation does not currently handle Vary: Range or range-specific cache keys
+	// - While RFC 9110 defines 206 as heuristically cacheable, safe caching requires understanding Range semantics
+	// - Users can explicitly add 206 to understood status codes via UnderstoodStatusCodes option if needed
+	http.StatusMultiStatus,     // 207 / RFC 4918, 11.1
+	http.StatusAlreadyReported, // 208 / RFC 5842, 7.1
+	http.StatusIMUsed,          // 226 / RFC 3229, 10.4.1
 
 	http.StatusMultipleChoices,  // 300 / RFC 9110, 15.4.1
 	http.StatusMovedPermanently, // 301 / RFC 9110, 15.4.2
