@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.14.0](https://github.com/2manymws/rc/compare/v0.13.0...v0.14.0) - 2025-11-10
+### Breaking Changes 🛠
+- fix(rfc9111): correct status code understanding logic per RFC 9111 Section 3 by @k1LoW in https://github.com/2manymws/rc/pull/94
+### Fix bug 🐛
+- fix(rfc9111): separate storage decision from freshness calculation by @k1LoW in https://github.com/2manymws/rc/pull/96
+
 ## [v0.13.0](https://github.com/2manymws/rc/compare/v0.12.1...v0.13.0) - 2025-11-06
 ### New Features 🎉
 - feat: support `stale-while-revalidate` and `stale-if-error` by @k1LoW in https://github.com/2manymws/rc/pull/92
