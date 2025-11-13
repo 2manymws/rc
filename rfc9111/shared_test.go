@@ -234,6 +234,54 @@ func TestShared_Storable(t *testing.T) {
 			time.Time{},
 		},
 		{
+			"GET 200 Cache-Control: must-understand, no-store, max-age=10 (understood status code) -> Store +10s",
+			&http.Request{
+				Host:   "example.com",
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusOK,
+				Header: http.Header{
+					"Cache-Control": []string{"must-understand, no-store, max-age=10"},
+				},
+			},
+			nil,
+			true,
+			time.Date(2024, 12, 13, 14, 15, 26, 00, time.UTC),
+		},
+		{
+			"GET 418 Cache-Control: must-understand, no-store, max-age=10 (understood status code) -> Store +10s",
+			&http.Request{
+				Host:   "example.com",
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: http.StatusTeapot, // 418 is in defaultUnderstoodStatusCodes
+				Header: http.Header{
+					"Cache-Control": []string{"must-understand, no-store, max-age=10"},
+				},
+			},
+			nil,
+			true,
+			time.Date(2024, 12, 13, 14, 15, 26, 00, time.UTC),
+		},
+		{
+			"GET 299 Cache-Control: must-understand, no-store, max-age=10 (unknown status code) -> No Store",
+			&http.Request{
+				Host:   "example.com",
+				Method: http.MethodGet,
+			},
+			&http.Response{
+				StatusCode: 299, // Not in defaultUnderstoodStatusCodes
+				Header: http.Header{
+					"Cache-Control": []string{"must-understand, no-store, max-age=10"},
+				},
+			},
+			nil,
+			false,
+			time.Time{},
+		},
+		{
 			"GET 200 Cache-Control: private -> No Store",
 			&http.Request{
 				Host:   "example.com",
