@@ -132,7 +132,9 @@ func (s *Shared) Storable(req *http.Request, res *http.Response, now time.Time) 
 	}
 
 	// - the no-store cache directive is not present in the response (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.5);
-	if rescc.NoStore {
+	// However, if must-understand is present and the cache understands the status code, ignore no-store (see https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.3)
+	shouldIgnoreNoStore := rescc.MustUnderstand && contains(res.StatusCode, s.understoodStatusCodes)
+	if rescc.NoStore && !shouldIgnoreNoStore {
 		return false, time.Time{}
 	}
 
