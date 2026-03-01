@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.14.1](https://github.com/2manymws/rc/compare/v0.14.0...v0.14.1) - 2026-03-01
+### Fix bug 🐛
+- fix(rfc9111): implement must-understand and no-store interaction per RFC 9111 Section 5.2.2.3 by @k1LoW in https://github.com/2manymws/rc/pull/98
+### Other Changes
+- chore(deps): bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/2manymws/rc/pull/99
+- chore(deps): bump the dependencies group with 3 updates by @dependabot[bot] in https://github.com/2manymws/rc/pull/100
+- chore(deps): bump the dependencies group with 3 updates by @dependabot[bot] in https://github.com/2manymws/rc/pull/101
+- chore(deps): bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/2manymws/rc/pull/102
+
 ## [v0.14.0](https://github.com/2manymws/rc/compare/v0.13.0...v0.14.0) - 2025-11-10
 ### Breaking Changes 🛠
 - fix(rfc9111): correct status code understanding logic per RFC 9111 Section 3 by @k1LoW in https://github.com/2manymws/rc/pull/94
